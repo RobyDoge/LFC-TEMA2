@@ -3,6 +3,7 @@
 #include <numeric>
 #include <random>
 #include <ranges>
+#include <unordered_set>
 
 Grammar::Grammar(std::ifstream& input)
 {
@@ -12,6 +13,101 @@ Grammar::Grammar(std::ifstream& input)
 	CreateProductions(input);
 	input.close();
 }	
+void Grammar::RemoveNonGeneratingSymbols()
+{
+	std::unordered_set<char> generatingSymbols;
+
+	// Inițializăm cu terminalele care pot genera cuvinte
+	for (char symbol : m_terminals)
+	{
+		if (symbol != '$')
+		generatingSymbols.insert(symbol);
+	}
+
+	bool changesMade = true;
+	while (changesMade)
+	{
+		changesMade = false;
+
+		for (const auto& [inputSymbol, outputSymbols] : m_productions)
+		{
+			if ((std::all_of(outputSymbols.begin(), outputSymbols.end(), [&](char symbol)
+				{ return generatingSymbols.find(symbol) != generatingSymbols.end(); }) ||
+				outputSymbols.empty() || // Verificăm dacă producția include simbolul vid
+				(outputSymbols.size() == 1 && outputSymbols[0] == '$')) && // Verificăm simbolul "$"
+				generatingSymbols.find(inputSymbol) == generatingSymbols.end())
+			{
+				generatingSymbols.insert(inputSymbol);
+				changesMade = true;
+			}
+		}
+	}
+
+	// Eliminăm simbolurile care nu generează cuvinte din m_nonTerminals și m_productions
+	m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
+		[&](char symbol) { return generatingSymbols.find(symbol) == generatingSymbols.end(); }),
+		m_nonTerminals.end());
+
+	for (auto it = m_productions.begin(); it != m_productions.end();)
+	{
+		if (generatingSymbols.find(it->first) == generatingSymbols.end())
+		{
+			it = m_productions.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+
+void Grammar::RemoveInaccessibleSymbols()
+{
+	std::unordered_set<char> accessibleSymbols;
+	std::unordered_set<char> newAccessibleSymbols;
+
+	newAccessibleSymbols.insert(m_startSymbol);
+
+	accessibleSymbols.insert(newAccessibleSymbols.begin(), newAccessibleSymbols.end());
+
+		for (char symbol : newAccessibleSymbols)
+		{
+			auto range = m_productions.equal_range(symbol);
+
+			for (auto it = range.first; it != range.second; ++it)
+			{
+				const std::string& output = it->second;
+				for (char outputSymbol : output)
+				{
+					if (std::ranges::find(m_nonTerminals, outputSymbol) != m_nonTerminals.end() &&
+						accessibleSymbols.find(outputSymbol) == accessibleSymbols.end())
+					{
+						newAccessibleSymbols.insert(outputSymbol);
+					}
+				}
+			}
+		}
+
+
+	// Eliminăm simbolurile inaccesibile din m_nonTerminals și m_productions
+	m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
+		[&](char symbol) { return newAccessibleSymbols.find(symbol) == newAccessibleSymbols.end(); }),
+		m_nonTerminals.end());
+
+	for (auto it = m_productions.begin(); it != m_productions.end();)
+	{
+		if (newAccessibleSymbols.find(it->first) == newAccessibleSymbols.end())
+		{
+			it = m_productions.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
 
 bool Grammar::IsIDC()
 {
@@ -77,6 +173,12 @@ std::string Grammar::GetLastWord()
 	return m_lastWord;
 }
 
+void Grammar::SimplifyGrammar()
+{
+	RemoveNonGeneratingSymbols();
+	RemoveInaccessibleSymbols();
+}
+
 void Grammar::GenerateRandomWord(std::string& word, std::ostream& outputStream, const bool printSteps)
 {
 	if (word.size()==1 && word[0] == m_startSymbol)
@@ -134,7 +236,14 @@ std::string Grammar::ApplyRandomProduction(const std::string& input, std::pair<c
 {
 	std::string producedWord = input;
 	auto [inputSymbol, outputSymbol] = production;
-
+	if (outputSymbol == "$")
+	{
+		if (const int pos = producedWord.find(inputSymbol); pos != std::string::npos)
+		{
+			producedWord.replace(pos, 1, "");
+		}
+	}
+	else
 	if (const int pos = producedWord.find(inputSymbol); pos != std::string::npos)
 	{
 		producedWord.replace(pos, 1, outputSymbol);

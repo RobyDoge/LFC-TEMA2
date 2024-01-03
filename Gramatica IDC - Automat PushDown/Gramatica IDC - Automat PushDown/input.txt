@@ -1,7 +1,10 @@
-SAB
-ab
+SABCD
+ab$
 S
-Sa b
-S aB
+S b
+S aBA
 B a
 B bB
+C a
+A $
+B S 
