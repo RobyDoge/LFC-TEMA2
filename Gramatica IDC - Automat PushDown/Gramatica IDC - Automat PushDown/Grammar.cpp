@@ -143,7 +143,7 @@ std::ostream& operator<<(std::ostream& out, const Grammar& grammar)
 		out << nonTerminal;
 		if (nonTerminal != grammar.m_nonTerminals.back())
 		{
-			out << " , ";
+			out << ",";
 		}
 	}
 	
@@ -153,10 +153,10 @@ std::ostream& operator<<(std::ostream& out, const Grammar& grammar)
 		out << terminal;
 		if (terminal != grammar.m_terminals.back())
 		{
-			out << " , ";
+			out << ",";
 		}
 	}
-	out << "}," << grammar.m_startSymbol << ", P)"
+	out << "}," << grammar.m_startSymbol << ",P)"
 		<< ".\nP containing the following productions:\n";
 	for (const auto& [inputSymbol, outputSymbols] : grammar.m_productions)
 	{
