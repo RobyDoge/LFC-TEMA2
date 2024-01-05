@@ -8,11 +8,11 @@ int main()
 	Grammar grammar(input);
 
 	std::cout << grammar << std::endl;
-	grammar.SimplifyGrammar();
+	grammar.FNC();
 	std::cout<< grammar << std::endl;
 	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << std::endl;
 
-	PushDownAutomaton pda;
-	std::cout << pda;
+	/*PushDownAutomaton pda;
+	std::cout << pda;*/
 
 }

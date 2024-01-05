@@ -4,7 +4,8 @@
 #include <random>
 #include <ranges>
 #include <unordered_set>
-
+#include <map>
+#include <set>
 Grammar::Grammar(std::ifstream& input)
 {
 	std::getline(input, m_nonTerminals);
@@ -13,6 +14,117 @@ Grammar::Grammar(std::ifstream& input)
 	CreateProductions(input);
 	input.close();
 }	
+
+
+
+void Grammar::FNC() 
+{
+	//Pasul 1
+	EliminateUnitProductions();
+
+	//PASUL 2
+	std::set<std::pair<char,std::string>> newTerminals;
+	int k = 0;
+	for (auto& [nonTerminal, production] : m_productions)
+	{
+		if (production.size() >= 2)
+		{
+			for (size_t i = 0; i < production.size(); ++i)
+			{
+				if (!std::isupper(production[i])) {
+					char newNonTerminal = 'C' + k; k++;
+					newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, production[i])));
+					auto temp = production[i];
+
+					// Parcurge toate perechile (cheie, valoare) în m_productions
+					for (auto& [key, value] : m_productions)
+					{ 
+						// Verifică dacă producția conține caracterul ce trebuie înlocuit
+						size_t pos = value.find(temp);
+						while (pos != std::string::npos)
+						{
+							// Înlocuiește caracterul în producție
+							value.replace(pos, 1, 1, newNonTerminal);
+							// Găsește următoarea apariție a caracterului în producție
+							pos = value.find(temp);
+						}
+					}
+				}
+			}
+		}
+	}
+	for ( auto& [newNonTerminal, terminal] : newTerminals)
+	{
+		m_productions.insert(std::make_pair(newNonTerminal, terminal));
+		m_nonTerminals += newNonTerminal;
+	}
+	newTerminals.clear();
+	// Pasul 3
+	for (auto& [nonTerminal, production] : m_productions)
+	{
+		if (production.size() > 2)
+		{
+			for (size_t i = 0; i < production.size(); ++i)
+			{
+				if (std::isupper(production[i]) && production[i]==production[i+1]) {
+					char newNonTerminal = 'C' + k; k++;
+					std::string temp(1,production[i]);
+					temp += production[i + 1];
+					newTerminals.insert(std::make_pair(newNonTerminal, temp));
+					i--;
+					// Parcurge toate perechile (cheie, valoare) în m_productions
+					for (auto& [key, value] : m_productions)
+					{
+						// Verifică dacă producția conține caracterul ce trebuie înlocuit
+						size_t pos = value.find(temp);
+						while (pos != std::string::npos)
+						{
+							// Înlocuiește caracterul în producție
+							value.replace(pos, 2, 1, newNonTerminal);
+							pos = value.find(temp);
+						}
+					}
+				}
+			}
+		}
+	}
+	for (auto& [newNonTerminal, terminal] : newTerminals)
+	{
+		m_productions.insert(std::make_pair(newNonTerminal, terminal));
+		m_nonTerminals += newNonTerminal;
+	}
+}
+
+
+void Grammar::EliminateUnitProductions()
+{
+
+	for (const auto& [nonTerminal, productions] : m_productions) 
+	{
+		if (productions.size()==1 && std::isupper(productions[0]) ) 
+		{
+			for (const auto& [nonTerminal1, productions1] : m_productions)
+			{
+				if (productions[0] == nonTerminal1)
+				{
+					m_productions.insert(std::make_pair(nonTerminal, productions1));
+				}
+			}
+		}
+	}
+
+	auto it = m_productions.begin();
+	while (it != m_productions.end()) {
+		const auto& [nonTerminal, productions] = *it;
+		if (productions.size() == 1 && std::isupper(productions[0])) {
+			it = m_productions.erase(it); // Șterge producția
+		}
+		else {
+			++it;
+		}
+	}
+}
+
 void Grammar::RemoveNonGeneratingSymbols()
 {
 	std::unordered_set<char> generatingSymbols;
@@ -175,6 +287,7 @@ std::string Grammar::GetLastWord()
 
 void Grammar::SimplifyGrammar()
 {
+	EliminateUnitProductions();
 	RemoveNonGeneratingSymbols();
 	RemoveInaccessibleSymbols();
 }

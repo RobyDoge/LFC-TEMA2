@@ -2,6 +2,7 @@
 #include "Grammar.h"
 #include <string>
 #include <stack>
+#include <map>
 
 class PushDownAutomaton
 {
@@ -22,7 +23,7 @@ private:
 	char m_initialStackHead;
 	std::string m_finalStates;
 	/*{currentState, inputSymbol, stackHead} -> {outputState, newStackHead}*/
-	std::unordered_multimap<std::string,std::string> m_transitionFunctions;
+	std::multimap<std::string,std::string> m_transitionFunctions;
 
 };
 

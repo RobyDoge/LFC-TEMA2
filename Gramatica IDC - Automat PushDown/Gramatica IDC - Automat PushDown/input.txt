@@ -1,10 +1,10 @@
-SABCD
-ab$
+STL
+ab+*[]$
 S
-S b
-S aBA
-B a
-B bB
-C a
-A $
-B S 
+S T++S+
+S T
+T L**T
+T L
+L [S]
+L a
+L b
