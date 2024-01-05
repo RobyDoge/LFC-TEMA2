@@ -2,32 +2,37 @@
 #include "Grammar.h"
 #include <string>
 #include <stack>
+#include <unordered_map>
 
 class PushDownAutomaton
 {
+	using string = std::string;
 public:
 	~PushDownAutomaton() = default;
 	PushDownAutomaton(const Grammar& grammar);
 
 	friend std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton);
 	bool IsDeterministic();
-	bool CheckWord(const std::string& checkWord);
+	bool CheckWord(const string& checkWord);
 
 private:
 	bool CheckSymbolRecursive(char currentState, std::stack<char>& currentStack, char symbol);
-	bool DeterministicAutomatonCheckWord(const std::string& string);
-	bool NonDeterministicAutomatonCheckWord(const std::string& string);
+	bool DeterministicAutomatonCheckWord(const string& string);
+	bool NonDeterministicAutomatonCheckWord(const string& string);
 
 private:
-	std::string m_states{};
-	std::string m_inputAlphabet{};
-	std::string m_stackAlphabet{};
-	char m_startingState{};
+	std::vector<string> m_states{};
+	string m_inputAlphabet{};
+	string m_stackAlphabet{};
+	string m_startingState{};
 	char m_initialStackHead{};
-	//std::stack<char> m_stack{}; - we might not need this - TBD
-	std::string m_finalStates{};
-	/*{currentState, inputSymbol, stackHead} -> {outputState, newStackHead}*/
-	std::unordered_multimap<std::string,std::string> m_transitionFunctions{};
+	std::vector<string> m_finalStates{};
+	/*{currentState(q+no), inputSymbol, stackHead} -> {outputState, newStackElements}*/
+	std::unordered_multimap<string,string> m_transitionFunctions{};
 
+	/*custom symbols for stack
+	 * $ - removes the top of the stack
+	 * #  - does not change the stack
+	 */
 };
 

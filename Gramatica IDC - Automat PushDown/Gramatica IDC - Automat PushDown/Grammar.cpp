@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <map>
 #include <set>
+
 Grammar::Grammar(std::ifstream& input)
 {
 	std::getline(input, m_nonTerminals);
@@ -13,8 +14,27 @@ Grammar::Grammar(std::ifstream& input)
 	input >> m_startSymbol;
 	CreateProductions(input);
 	input.close();
-}	
+}
 
+std::string Grammar::GetNonTerminals() const
+{
+	return m_nonTerminals;
+}
+
+std::string Grammar::GetTerminals() const
+{
+	return m_terminals;
+}
+
+std::unordered_multimap<char, std::string> Grammar::GetProductions() const
+{
+	return m_productions;
+}
+
+char Grammar::GetStartSymbol() const
+{
+	return m_startSymbol;
+}
 
 
 void Grammar::FNC() 

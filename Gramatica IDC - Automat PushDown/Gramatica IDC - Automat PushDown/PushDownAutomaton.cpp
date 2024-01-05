@@ -1,11 +1,44 @@
 #include "PushDownAutomaton.h"
-
 #include <algorithm>
 #include <format>
 #include <ranges>
+
 PushDownAutomaton::PushDownAutomaton(const Grammar& grammar)
 {
+	m_states.emplace_back("q0");
+	string firstState = m_states[0];
+	for(const auto& inputAlphabetSymbol : grammar.GetTerminals())
+	{
+		m_inputAlphabet.push_back(inputAlphabetSymbol);
+	}
+	for(const auto& stackAlphabetSymbol : grammar.GetNonTerminals())
+	{
+		m_stackAlphabet.push_back(stackAlphabetSymbol);
+	}
 
+	for (const auto& [inputSymbol, outputSymbols] : grammar.GetProductions())
+	{
+		//if there is only one leemts we need to delete the top of the stack
+		if(outputSymbols.size()==1)
+		{
+			m_transitionFunctions.emplace
+			(
+				std::format("{}{}{}", firstState, outputSymbols[0], inputSymbol),
+				std::format("{}{}", firstState, '$')
+			);
+			continue;
+		}
+
+		//if there is more than one element we need to add them to the stack
+		m_transitionFunctions.emplace
+		(
+			std::format("{}{}{}", firstState, outputSymbols[0], inputSymbol),
+			std::format("{}{}", firstState, outputSymbols.substr(1))
+		);
+	}
+
+	m_startingState = firstState;
+	m_initialStackHead = grammar.GetStartSymbol();
 }
 
 bool PushDownAutomaton::IsDeterministic()
@@ -31,7 +64,7 @@ bool PushDownAutomaton::CheckWord(const std::string& checkWord)
 
 bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& string)
 {
-	char currentState = m_startingState;
+	auto currentState = m_startingState;
 	std::stack<char> stack;
 	stack.push(m_initialStackHead);
 
@@ -39,8 +72,8 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& strin
 	{
 		const auto availableTransitionFunction=std::ranges::find_if(m_transitionFunctions,[&](const auto& transitionFunction)
 		{
-			return transitionFunction.first[0] == currentState && transitionFunction.first[1] == symbol &&
-				transitionFunction.first[2] == stack.top();
+			return transitionFunction.first[1] == currentState[1] && transitionFunction.first[2] == symbol &&
+				transitionFunction.first[3] == stack.top();
 		});
 
 		if(availableTransitionFunction == m_transitionFunctions.end())
@@ -50,11 +83,22 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& strin
 		currentState = availableTransitionFunction->second[0];
 		if(availableTransitionFunction->second[1] == '$')
 		{
+			if(stack.empty())
+			{
+				return false;
+			}
 			stack.pop();
-			break;
+			continue;
 		}
-
-		stack.push(availableTransitionFunction->second[1]);
+		if (availableTransitionFunction->second[1] != '#')
+		{
+			stack.pop();
+			continue;
+		}
+		for(const auto& stackSymbol : availableTransitionFunction->second.substr(1))
+		{
+			stack.push(stackSymbol);
+		}
 	}
 
 	return true;
@@ -63,11 +107,13 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& strin
 bool PushDownAutomaton::NonDeterministicAutomatonCheckWord(const std::string& string)
 {
 	//todo
+	return true;
 }
 
 bool PushDownAutomaton::CheckSymbolRecursive(char currentState, std::stack<char>& currentStack, char symbol)
 {
 	//used for nondeterminiscn automantons
+	return true;
 }
 
 std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)

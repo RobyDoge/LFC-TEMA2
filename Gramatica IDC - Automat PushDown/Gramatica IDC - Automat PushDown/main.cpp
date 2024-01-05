@@ -12,6 +12,7 @@ int main()
 	std::cout<< grammar << std::endl;
 	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << std::endl;
 
+
 	/*PushDownAutomaton pda;
 	std::cout << pda;*/
 

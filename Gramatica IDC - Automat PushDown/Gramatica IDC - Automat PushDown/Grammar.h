@@ -10,6 +10,11 @@ public:
 	Grammar() = default;
 	Grammar(std::ifstream& input);
 
+	std::string GetNonTerminals() const;
+	std::string GetTerminals() const;
+	std::unordered_multimap<char, std::string> GetProductions() const;
+	char GetStartSymbol() const;
+
 	bool IsIDC();
 	void GenerateRandomWord(std::string& word, std::ostream& outputStream, bool printSteps);
 	friend std::ostream& operator<<(std::ostream& out, const Grammar& grammar);
