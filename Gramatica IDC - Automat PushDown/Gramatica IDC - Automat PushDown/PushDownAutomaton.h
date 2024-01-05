@@ -16,9 +16,9 @@ public:
 	bool CheckWord(const string& checkWord);
 
 private:
-	bool CheckSymbolRecursive(char currentState, std::stack<char>& currentStack, char symbol);
-	bool DeterministicAutomatonCheckWord(const string& string);
-	bool NonDeterministicAutomatonCheckWord(const string& string);
+	bool CheckSymbolRecursive(string& currentState, std::stack<char>& currentStack, string& remainingWord);
+	bool DeterministicAutomatonCheckWord(const string& word);
+	bool NonDeterministicAutomatonCheckWord(const string& word);
 
 private:
 	std::vector<string> m_states{};
@@ -32,7 +32,6 @@ private:
 
 	/*custom symbols for stack
 	 * $ - removes the top of the stack
-	 * #  - does not change the stack
 	 */
 };
 

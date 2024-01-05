@@ -18,7 +18,7 @@ PushDownAutomaton::PushDownAutomaton(const Grammar& grammar)
 
 	for (const auto& [inputSymbol, outputSymbols] : grammar.GetProductions())
 	{
-		//if there is only one leemts we need to delete the top of the stack
+		//if there is only one element we need to delete the top of the stack
 		if(outputSymbols.size()==1)
 		{
 			m_transitionFunctions.emplace
@@ -62,13 +62,13 @@ bool PushDownAutomaton::CheckWord(const std::string& checkWord)
 	return NonDeterministicAutomatonCheckWord(checkWord);
 }
 
-bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& string)
+bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& word)
 {
 	auto currentState = m_startingState;
 	std::stack<char> stack;
 	stack.push(m_initialStackHead);
 
-	for(const auto& symbol : string)
+	for(const auto& symbol : word)
 	{
 		const auto availableTransitionFunction=std::ranges::find_if(m_transitionFunctions,[&](const auto& transitionFunction)
 		{
@@ -80,23 +80,19 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& strin
 		{
 			return false;
 		}
-		currentState = availableTransitionFunction->second[0];
-		if(availableTransitionFunction->second[1] == '$')
+		currentState[1] = availableTransitionFunction->second[1];
+
+		if (stack.empty())
 		{
-			if(stack.empty())
+			return false;
+		}
+		stack.pop();
+		for(const auto& stackSymbol : availableTransitionFunction->second.substr(2))
+		{
+			if (stackSymbol == '$')
 			{
-				return false;
+				continue;
 			}
-			stack.pop();
-			continue;
-		}
-		if (availableTransitionFunction->second[1] != '#')
-		{
-			stack.pop();
-			continue;
-		}
-		for(const auto& stackSymbol : availableTransitionFunction->second.substr(1))
-		{
 			stack.push(stackSymbol);
 		}
 	}
@@ -104,22 +100,75 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& strin
 	return true;
 }
 
-bool PushDownAutomaton::NonDeterministicAutomatonCheckWord(const std::string& string)
+bool PushDownAutomaton::NonDeterministicAutomatonCheckWord(const std::string& word)
 {
-	//todo
-	return true;
+	std::stack<char> currentStack;
+	currentStack.emplace(m_initialStackHead);
+	string wordToBeChecked = word;
+	return CheckSymbolRecursive(m_startingState, currentStack, wordToBeChecked);
 }
 
-bool PushDownAutomaton::CheckSymbolRecursive(char currentState, std::stack<char>& currentStack, char symbol)
+bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<char>& currentStack, string& remainingWord)
 {
-	//used for nondeterminiscn automantons
-	return true;
+	if(remainingWord.empty() && !currentStack.empty())
+	{
+		return false;
+	}
+	if(remainingWord.empty() && currentStack.empty())
+	{
+		return true;
+	}
+	if(remainingWord.empty() && std::ranges::find(m_finalStates, currentState) != m_finalStates.end())
+	{
+		return true;
+	}
+
+
+	auto symbolPosition{ -1 };
+	return std::ranges::all_of(remainingWord, [&](const auto& symbol)
+	{
+		++symbolPosition;
+		const auto availableTransitionFunctionsView = std::views::filter(m_transitionFunctions, [&](const auto& transitionFunction)
+		{
+			return transitionFunction.first[1] == currentState[1] && transitionFunction.first[2] == symbol &&
+				transitionFunction.first[3] == currentStack.top();
+		});
+
+		auto availableTransitionFunctions = availableTransitionFunctionsView.base();
+		bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
+		{
+			currentState[0] = transitionFunction.second[0];
+			currentState[1] = transitionFunction.second[1];
+
+			currentStack.pop();
+			if (currentStack.empty())
+			{
+				return false;
+			}
+			for (const auto& stackSymbol : transitionFunction.second.substr(2))
+			{
+				if (stackSymbol == '$')
+				{
+					continue;
+				}
+				currentStack.push(stackSymbol);
+			}
+			if(string newWord = remainingWord.substr(symbolPosition);
+				CheckSymbolRecursive(currentState, currentStack, newWord))
+			{
+				return true;
+			}
+			return false;
+		});
+
+		return aux;
+	});
 }
 
 std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)
 {
 	os << "Push Down Automaton: M = ({";
-	for(const auto state : automaton.m_states)
+	for(const auto& state : automaton.m_states)
 	{
 		os << state;
 		if(state != automaton.m_states.back())
@@ -146,7 +195,7 @@ std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)
 		}
 	}
 	os << "},P,"<<automaton.m_startingState<<","<<automaton.m_initialStackHead<<",{";
-	for(const auto finalState : automaton.m_finalStates)
+	for(const auto& finalState : automaton.m_finalStates)
 	{
 		os << finalState;
 		if (finalState != automaton.m_finalStates.back())
@@ -154,7 +203,7 @@ std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)
 			os << ",";
 		}
 	}
-	os<< "})." << std::endl;
+	os<< "})." << '\n';
 	os<<"P containing the following transitions : \n";
 		for (const auto& [inputSymbol, outputSymbols] : automaton.m_transitionFunctions)
 		{

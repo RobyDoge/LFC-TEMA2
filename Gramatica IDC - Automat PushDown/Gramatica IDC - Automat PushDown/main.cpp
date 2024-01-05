@@ -15,5 +15,5 @@ int main()
 
 	/*PushDownAutomaton pda;
 	std::cout << pda;*/
-
+	return 69;
 }
