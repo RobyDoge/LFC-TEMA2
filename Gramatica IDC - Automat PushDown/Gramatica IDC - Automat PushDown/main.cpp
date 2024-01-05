@@ -7,13 +7,13 @@ int main()
 	std::ifstream input("input.txt");
 	Grammar grammar(input);
 
-	std::cout << grammar << std::endl;
+	std::cout << grammar << '\n';
 	grammar.FNC();
-	std::cout<< grammar << std::endl;
-	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << std::endl;
+	std::cout<< grammar << '\n';
+	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << '\n';
 
 
 	/*PushDownAutomaton pda;
 	std::cout << pda;*/
-	return 69;
+	return 9;
 }

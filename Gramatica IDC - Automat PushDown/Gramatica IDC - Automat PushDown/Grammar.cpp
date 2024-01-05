@@ -45,19 +45,20 @@ void Grammar::FNC()
 	//PASUL 2
 	std::set<std::pair<char,std::string>> newTerminals;
 	int k = 0;
-	for (auto& [nonTerminal, production] : m_productions)
+	for (auto& production : m_productions | std::views::values)
 	{
 		if (production.size() >= 2)
 		{
-			for (size_t i = 0; i < production.size(); ++i)
+			for(const char symbol : production)
 			{
-				if (!std::isupper(production[i])) {
-					char newNonTerminal = 'C' + k; k++;
-					newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, production[i])));
-					auto temp = production[i];
+				if (!std::isupper(symbol)) {
+					char newNonTerminal = 'C' + k;
+					k++;
+					newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, symbol)));
+					auto temp = symbol;
 
 					// Parcurge toate perechile (cheie, valoare) în m_productions
-					for (auto& [key, value] : m_productions)
+					for (auto& value : m_productions | std::views::values)
 					{ 
 						// Verifică dacă producția conține caracterul ce trebuie înlocuit
 						size_t pos = value.find(temp);
@@ -80,20 +81,21 @@ void Grammar::FNC()
 	}
 	newTerminals.clear();
 	// Pasul 3
-	for (auto& [nonTerminal, production] : m_productions)
+	for (auto& production : m_productions | std::views::values)
 	{
 		if (production.size() > 2)
 		{
 			for (size_t i = 0; i < production.size(); ++i)
 			{
 				if (std::isupper(production[i]) && production[i]==production[i+1]) {
-					char newNonTerminal = 'C' + k; k++;
+					char newNonTerminal = 'C' + k;
+					k++;
 					std::string temp(1,production[i]);
 					temp += production[i + 1];
 					newTerminals.insert(std::make_pair(newNonTerminal, temp));
 					i--;
 					// Parcurge toate perechile (cheie, valoare) în m_productions
-					for (auto& [key, value] : m_productions)
+					for (auto& value : m_productions | std::views::values)
 					{
 						// Verifică dacă producția conține caracterul ce trebuie înlocuit
 						size_t pos = value.find(temp);
@@ -135,8 +137,8 @@ void Grammar::EliminateUnitProductions()
 
 	auto it = m_productions.begin();
 	while (it != m_productions.end()) {
-		const auto& [nonTerminal, productions] = *it;
-		if (productions.size() == 1 && std::isupper(productions[0])) {
+		if (const auto& [nonTerminal, productions] = *it; 
+			productions.size() == 1 && std::isupper(productions[0])) {
 			it = m_productions.erase(it); // Șterge producția
 		}
 		else {
@@ -163,11 +165,11 @@ void Grammar::RemoveNonGeneratingSymbols()
 
 		for (const auto& [inputSymbol, outputSymbols] : m_productions)
 		{
-			if ((std::all_of(outputSymbols.begin(), outputSymbols.end(), [&](char symbol)
-				{ return generatingSymbols.find(symbol) != generatingSymbols.end(); }) ||
+			if ((std::ranges::all_of(outputSymbols, [&](char symbol)
+			                         { return generatingSymbols.find(symbol) != generatingSymbols.end(); }) ||
 				outputSymbols.empty() || // Verificăm dacă producția include simbolul vid
 				(outputSymbols.size() == 1 && outputSymbols[0] == '$')) && // Verificăm simbolul "$"
-				generatingSymbols.find(inputSymbol) == generatingSymbols.end())
+				!generatingSymbols.contains(inputSymbol))
 			{
 				generatingSymbols.insert(inputSymbol);
 				changesMade = true;
@@ -176,13 +178,14 @@ void Grammar::RemoveNonGeneratingSymbols()
 	}
 
 	// Eliminăm simbolurile care nu generează cuvinte din m_nonTerminals și m_productions
-	m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
-		[&](char symbol) { return generatingSymbols.find(symbol) == generatingSymbols.end(); }),
-		m_nonTerminals.end());
+	std::erase_if(m_nonTerminals,[&](const char symbol)
+	{
+		return !generatingSymbols.contains(symbol);
+	});
 
 	for (auto it = m_productions.begin(); it != m_productions.end();)
 	{
-		if (generatingSymbols.find(it->first) == generatingSymbols.end())
+		if (!generatingSymbols.contains(it->first))
 		{
 			it = m_productions.erase(it);
 		}
@@ -213,7 +216,7 @@ void Grammar::RemoveInaccessibleSymbols()
 				for (char outputSymbol : output)
 				{
 					if (std::ranges::find(m_nonTerminals, outputSymbol) != m_nonTerminals.end() &&
-						accessibleSymbols.find(outputSymbol) == accessibleSymbols.end())
+						!accessibleSymbols.contains(outputSymbol))
 					{
 						newAccessibleSymbols.insert(outputSymbol);
 					}
@@ -223,13 +226,14 @@ void Grammar::RemoveInaccessibleSymbols()
 
 
 	// Eliminăm simbolurile inaccesibile din m_nonTerminals și m_productions
-	m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
-		[&](char symbol) { return newAccessibleSymbols.find(symbol) == newAccessibleSymbols.end(); }),
-		m_nonTerminals.end());
+	std::erase_if(m_nonTerminals,[&](const char symbol)
+	{
+		return !newAccessibleSymbols.contains(symbol);
+	});
 
 	for (auto it = m_productions.begin(); it != m_productions.end();)
 	{
-		if (newAccessibleSymbols.find(it->first) == newAccessibleSymbols.end())
+		if (!newAccessibleSymbols.contains(it->first))
 		{
 			it = m_productions.erase(it);
 		}
@@ -295,7 +299,7 @@ std::ostream& operator<<(std::ostream& out, const Grammar& grammar)
 		out << inputSymbol;
 		out << " -> ";
 		out<< outputSymbols;
-		out << std::endl;
+		out << '\n';
 	}
 	return out;
 }
