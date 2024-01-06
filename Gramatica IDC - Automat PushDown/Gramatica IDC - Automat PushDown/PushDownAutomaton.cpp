@@ -28,12 +28,13 @@ PushDownAutomaton::PushDownAutomaton(const Grammar& grammar)
 			);
 			continue;
 		}
-
+		std::string newStackSymbols = outputSymbols.substr(1);
+		std::ranges::reverse(newStackSymbols);
 		//if there is more than one element we need to add them to the stack
 		m_transitionFunctions.emplace
 		(
 			std::format("{}{}{}", firstState, outputSymbols[0], inputSymbol),
-			std::format("{}{}", firstState, outputSymbols.substr(1))
+			std::format("{}{}", firstState, newStackSymbols)
 		);
 	}
 
@@ -108,13 +109,17 @@ bool PushDownAutomaton::NonDeterministicAutomatonCheckWord(const std::string& wo
 	return CheckSymbolRecursive(m_startingState, currentStack, wordToBeChecked);
 }
 
-bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<char>& currentStack, string& remainingWord)
+bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<char>& stack, string& remainingWord)
 {
-	if(remainingWord.empty() && !currentStack.empty())
+	if(remainingWord.empty() && !stack.empty())
 	{
 		return false;
 	}
-	if(remainingWord.empty() && currentStack.empty())
+	if(!remainingWord.empty() && stack.empty())
+	{
+		return false;
+	}
+	if(remainingWord.empty() && stack.empty())
 	{
 		return true;
 	}
@@ -124,27 +129,25 @@ bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<ch
 	}
 
 
-	auto symbolPosition{ -1 };
-	return std::ranges::all_of(remainingWord, [&](const auto& symbol)
+	for(int symbolPosition = 0; symbolPosition < remainingWord.size();symbolPosition++)
 	{
-		++symbolPosition;
-		const auto availableTransitionFunctionsView = std::views::filter(m_transitionFunctions, [&](const auto& transitionFunction)
+		char symbol = remainingWord[symbolPosition];
+		const string key = std::format("{}{}{}{}", 'q', currentState[1], symbol, stack.top());
+		std::vector<std::pair<std::string, std::string>>availableTransitionFunctions;
+		for(const auto& [inputSymbol, outputSymbols] : m_transitionFunctions)
 		{
-			return transitionFunction.first[1] == currentState[1] && transitionFunction.first[2] == symbol &&
-				transitionFunction.first[3] == currentStack.top();
-		});
+			if (inputSymbol == key)
+			{
+				availableTransitionFunctions.emplace_back(inputSymbol, outputSymbols);
+			}
+		}
 
-		auto availableTransitionFunctions = availableTransitionFunctionsView.base();
-		bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
+		const bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
 		{
+			auto currentStack = stack;
 			currentState[0] = transitionFunction.second[0];
 			currentState[1] = transitionFunction.second[1];
-
 			currentStack.pop();
-			if (currentStack.empty())
-			{
-				return false;
-			}
 			for (const auto& stackSymbol : transitionFunction.second.substr(2))
 			{
 				if (stackSymbol == '$')
@@ -153,7 +156,7 @@ bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<ch
 				}
 				currentStack.push(stackSymbol);
 			}
-			if(string newWord = remainingWord.substr(symbolPosition);
+			if(string newWord = remainingWord.substr(symbolPosition+1);
 				CheckSymbolRecursive(currentState, currentStack, newWord))
 			{
 				return true;
@@ -162,7 +165,7 @@ bool PushDownAutomaton::CheckSymbolRecursive(string& currentState, std::stack<ch
 		});
 
 		return aux;
-	});
+	}
 }
 
 std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)
@@ -207,8 +210,8 @@ std::ostream& operator<<(std::ostream& os, const PushDownAutomaton& automaton)
 	os<<"P containing the following transitions : \n";
 		for (const auto& [inputSymbol, outputSymbols] : automaton.m_transitionFunctions)
 		{
-			os << std::format("P({},{},{},) -> ({},{})\n",
-				inputSymbol[0],inputSymbol[1],inputSymbol[2],outputSymbols[0],outputSymbols[1]);
+			os << std::format("P({}{},{},{}) -> ({}{},{})\n",
+				inputSymbol[0],inputSymbol[1],inputSymbol[2], inputSymbol[3], outputSymbols[0], outputSymbols[1],outputSymbols[2]);
 		}
 	return os;
 }

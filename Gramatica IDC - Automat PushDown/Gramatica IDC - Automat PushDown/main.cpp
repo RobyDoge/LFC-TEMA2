@@ -4,18 +4,11 @@
 #include "PushDownAutomaton.h"
 int main()
 {
-	std::ifstream input("input.txt");
+	std::ifstream input("test.txt");
 	Grammar grammar(input);
-
-	std::cout << grammar << '\n';
-	grammar.FNC();
-	std::cout<< grammar << std::endl;
-	grammar.FNG();
-	std::cout << grammar << std::endl;
-	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << std::endl;
-
-
-	/*PushDownAutomaton pda;
-	std::cout << pda;*/
+	PushDownAutomaton pda(grammar);
+	std::cout << pda;
+	std::string word{ "abab" };
+	std::cout << "Word: " << word << " is " << (pda.CheckWord(word) ? "accepted" : "rejected") << '\n';
 	return 9;
 }
