@@ -9,8 +9,11 @@ public:
 	PolishForm(std::string expression);
 	~PolishForm() = default;
 
+	std::string GetResult();
+
 private:
 	std::stack<char> m_operators;
+	std::string m_result;
 
 private:
 	static int GetOperatorPrecedence(char op);

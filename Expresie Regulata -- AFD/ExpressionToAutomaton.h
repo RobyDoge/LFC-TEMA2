@@ -3,6 +3,8 @@
 #include <string>
 #include <istream>
 
+#include "PolishForm.h"
+
 class ExpressionToAutomaton
 {
 public:
@@ -13,6 +15,7 @@ public:
 	bool IsExpressionValid();
 
 	std::string GetExpression();
+	void SetPolishForm();
 
 
 private:
@@ -20,8 +23,7 @@ private:
 	std::list<char> m_operators;
 	std::list<char> m_states;
 
-
-
+	PolishForm m_polishForm;
 	//after the polish form is created, we will use it to create the automaton
 	//via the CreateAutomatonFromPolishForm() method
 	//DeterministicFiniteAutomaton m_automaton;

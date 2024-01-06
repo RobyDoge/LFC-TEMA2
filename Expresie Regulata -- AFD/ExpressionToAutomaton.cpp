@@ -14,3 +14,9 @@ std::string ExpressionToAutomaton::GetExpression()
 {
 	return m_expression;
 }
+
+void ExpressionToAutomaton::SetPolishForm()
+{
+	PolishForm polishForm(m_expression);
+	m_polishForm = polishForm.GetResult();
+}
