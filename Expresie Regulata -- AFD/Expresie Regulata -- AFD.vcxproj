@@ -20,10 +20,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DeterministicFiniteAutomaton.h" />
+    <ClInclude Include="ExpressionToAutomaton.h" />
+    <ClInclude Include="PolishForm.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeterministicFiniteAutomaton.cpp" />
+    <ClCompile Include="ExpressionToAutomaton.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PolishForm.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="input.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
