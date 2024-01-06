@@ -182,30 +182,55 @@ void Grammar::FNG()
     bool noChangesMade = true;
     while (noChangesMade)
     {
-		noChangesMade = false;
+        noChangesMade = false;
         for (auto& prod : m_productions)
         {
-            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && isNonTerminal(prod.second[0])&& prod.first!='Z' && prod.second[0]!='Z')
+            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
             {
-			    FngLema1(prod, 0);
+                FngLema1(prod, 0);
                 noChangesMade = true;
                 break;
             }
-		    else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) && prod.first != 'Z' && prod.second[0] != 'Z')
-		    {
-			    FngLema2(prod);
+            else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
+            {
+                FngLema2(prod);
                 noChangesMade = true;
-				break;
-		    }
+                break;
+            }
         }
     }
-    m_productions.erase(std::unique(m_productions.begin(), m_productions.end()), m_productions.end());
-}
-void Grammar::RemoveDuplicates(std::vector<std::pair<char, std::string>>& input)
-{
-    input.erase(std::unique(input.begin(), input.end()), input.end());
+    //PAS 2 -> Mai trb putin testat 
+	int k = m_priority.size() - 2;
+    while (k>=0)
+    {
+        for (auto& prod : m_productions)
+        {
+            if (GetPriority(prod.first) == k && GetPriority(prod.first) < GetPriority(prod.second[0]))
+            {
+                FngLema1(prod, 0);
+                break;
+            }
+        }
+        k--;
+    }
+    //PAS 3 
+    noChangesMade = true;
+    while (noChangesMade)
+    {
+        noChangesMade = false;
+        for (auto& prod : m_productions)
+        {
+			if (std::isdigit(prod.first) && isNonTerminal(prod.second[0]))
+            {
+                FngLema1(prod, 0);
+                noChangesMade = true;
+                break;
+            }
+        }
+    }
 
 }
+
 void Grammar::FngLema1(std::pair<char, std::string>& production, size_t BPos)
 {
     char first = production.first;
@@ -227,20 +252,22 @@ void Grammar::FngLema2(std::pair<char, std::string>& production)
 {
     char first = production.first;
     std::string right = production.second;
-    std::pair<char, std::string> newProduction1 = std::make_pair('Z', right.substr(1, right.size()));
-    m_productions.push_back(newProduction1);
-    std::pair<char, std::string> newProduction2 = std::make_pair('Z', right.substr(1, right.size()) + 'Z');
-    m_productions.push_back(newProduction2);
-
     m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), production), m_productions.end());
+    std::pair<char, std::string> newProduction1 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()));
+    m_productions.push_back(newProduction1);
+    std::pair<char, std::string> newProduction2 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()) + m_newNonTerminal);
+    m_productions.push_back(newProduction2);
     for (auto& [nonTerminal, productions] : m_productions)
     {
         if (nonTerminal == first)
         {
-            m_productions.push_back(std::make_pair(nonTerminal, productions+'Z'));
+            m_productions.push_back(std::make_pair(nonTerminal, productions+ m_newNonTerminal));
         }
     }
-	if (!isNonTerminal('Z')) m_nonTerminals += 'Z';
+
+    m_nonTerminals += m_newNonTerminal;
+    m_newNonTerminal++;
+
 }
 
 bool Grammar::isNonTerminal(char symbol)

@@ -43,5 +43,6 @@ private:
 	std::vector<std::pair<char,std::string>> m_productions;
 	std::string m_lastWord{};
 	std::vector<std::pair<int, char>> m_priority;
+	char m_newNonTerminal = '0';
 
 };
