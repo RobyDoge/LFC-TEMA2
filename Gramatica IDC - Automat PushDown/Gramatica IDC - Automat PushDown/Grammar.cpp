@@ -201,16 +201,20 @@ void Grammar::FNG()
     }
     //PAS 2 -> Mai trb putin testat 
 	int k = m_priority.size() - 2;
+     noChangesMade = true;
     while (k>=0)
     {
+        noChangesMade = false;
         for (auto& prod : m_productions)
         {
             if (GetPriority(prod.first) == k && GetPriority(prod.first) < GetPriority(prod.second[0]))
             {
                 FngLema1(prod, 0);
+                noChangesMade = true;
                 break;
             }
         }
+        if (!noChangesMade)
         k--;
     }
     //PAS 3 
