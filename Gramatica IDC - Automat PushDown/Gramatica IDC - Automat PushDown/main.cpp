@@ -9,8 +9,10 @@ int main()
 
 	std::cout << grammar << '\n';
 	grammar.FNC();
-	std::cout<< grammar << '\n';
-	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << '\n';
+	std::cout<< grammar << std::endl;
+	grammar.FNG();
+	std::cout << grammar << std::endl;
+	std::cout<< "Is IDC: " << std::boolalpha << grammar.IsIDC() << std::endl;
 
 
 	/*PushDownAutomaton pda;

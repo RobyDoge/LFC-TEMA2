@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <map>
 
 class Grammar
 {
@@ -12,7 +13,7 @@ public:
 
 	std::string GetNonTerminals() const;
 	std::string GetTerminals() const;
-	std::unordered_multimap<char, std::string> GetProductions() const;
+	std::vector<std::pair<char, std::string>> GetProductions() const;
 	char GetStartSymbol() const;
 
 	bool IsIDC();
@@ -21,16 +22,26 @@ public:
 	std::string GetLastWord();
 	void SimplifyGrammar();
 	void FNC();
+	void FNG();
 private:
+	void RemoveDuplicates(std::vector<std::pair<char, std::string>>& input);
 	static std::string ApplyRandomProduction(const std::string& input, std::pair<char, std::string> production);
 	void CreateProductions(std::ifstream& input);
 	void RemoveNonGeneratingSymbols();
 	void RemoveInaccessibleSymbols();
 	void EliminateUnitProductions();
+	void FngLema1(std::pair< char, std::string>& production, size_t BPos);
+	void FngLema2(std::pair<char, std::string>& production);
+	bool isNonTerminal(char symbol);
+	void CreatePriority();
+	int GetPriority(char symbol);
+
 private:
 	std::string m_nonTerminals;
 	std::string m_terminals;
 	char m_startSymbol;
-	std::unordered_multimap<char,std::string> m_productions;
+	std::vector<std::pair<char,std::string>> m_productions;
 	std::string m_lastWord{};
+	std::vector<std::pair<int, char>> m_priority;
+
 };
