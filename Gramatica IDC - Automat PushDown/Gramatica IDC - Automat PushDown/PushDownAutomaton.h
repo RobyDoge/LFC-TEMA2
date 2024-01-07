@@ -8,6 +8,7 @@ using string = std::string;
 class PushDownAutomaton
 {
 public:
+	PushDownAutomaton() =default;
 	~PushDownAutomaton() = default;
 	PushDownAutomaton(const Grammar& grammar);
 
