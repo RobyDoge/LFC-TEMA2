@@ -1,8 +1,6 @@
-SAB
-ab
+SA
+abc
 S
-S AB
-A BS
-A b
-B SA
-B a
+S abA
+A aAbb
+A acbb

@@ -38,7 +38,7 @@ char Grammar::GetStartSymbol() const
 
 void Grammar::FNC()
 {
-    // Pasul 1
+    // Pasul 1 //Elimina redenumirile de tipul S->L (neterminal->neterminal) , in loc de S->L o sa avem S-> (Toate productiile unde L e membru stang)
     EliminateUnitProductions();
 
     // PASUL 2
@@ -46,11 +46,12 @@ void Grammar::FNC()
     int k = 0;
     for (auto& [nonTerminal, production] : m_productions)
     {
+        //Daca membrul drept al productiei este format din 2 sau mai multe caractere
         if (production.size() >= 2)
         {
             for (size_t i = 0; i < production.size(); ++i)
             {
-                if (!isNonTerminal(production[i]))
+                if (!isNonTerminal(production[i]))  //Inlocuim fiecare terminal cu un nonTerminal creat de noi (deocamdata se duce de la C in colo, trb schimbat da nush exact cu ce)
                 {
                     char newNonTerminal = 'C' + k;
                     k++;
@@ -78,6 +79,7 @@ void Grammar::FNC()
             }
         }
     }
+    //Adauga la productii terminalele + nonterminalele pe care le-au inlocuit spre exemplu C->a D->b etc.
     for (auto& [newNonTerminal, terminal] : newTerminals)
     {
         m_productions.push_back(std::make_pair(newNonTerminal, terminal));
@@ -86,11 +88,12 @@ void Grammar::FNC()
     // Pasul 3
     for (auto& [nonTerminal, production] : m_productions)
     {
+        //Daca membrul drept al productiei este format din mai mult de 2 caractere 
         if (production.size() > 2)
         {
             for (size_t i = 0; i < production.size(); ++i)
             {
-                if (isNonTerminal(production[i]) && production[i] == production[i + 1])
+                if (isNonTerminal(production[i]) && production[i] == production[i + 1]) // Si exista 2 neterminale la fel consecutive, le inlocuim cu un NOU neterminal!(la fel ca la pasul 2)
                 {
                     char newNonTerminal = 'C' + k;
                     k++;
@@ -157,6 +160,7 @@ void Grammar::EliminateUnitProductions()
 
 void Grammar::CreatePriority()
 {
+	//Creeaza un vector de perechi <prioritate, neterminal> (avem nevoie de prioritati pt FNG)
     int k = 0;
     for (const auto& nonTerminal : m_nonTerminals)
     {
@@ -177,37 +181,69 @@ int Grammar::GetPriority(char symbol) {
 
 void Grammar::FNG()
 {
-    //PAS 1
+    //PAS 1 ... Daca avem o situatie de tipul C->A si C are prioritate mai mare aplicam lema 1, pt situatii de tip C->C lema 2
 	CreatePriority();
     bool noChangesMade = true;
     while (noChangesMade)
     {
-		noChangesMade = false;
+        noChangesMade = false;
         for (auto& prod : m_productions)
         {
-            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && isNonTerminal(prod.second[0])&& prod.first!='Z' && prod.second[0]!='Z')
+            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
             {
-			    FngLema1(prod, 0);
+                FngLema1(prod, 0);
                 noChangesMade = true;
                 break;
             }
-		    else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) && prod.first != 'Z' && prod.second[0] != 'Z')
-		    {
-			    FngLema2(prod);
+            else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
+            {
+                FngLema2(prod);
                 noChangesMade = true;
-				break;
-		    }
+                break;
+            }
         }
     }
-    m_productions.erase(std::unique(m_productions.begin(), m_productions.end()), m_productions.end());
-}
-void Grammar::RemoveDuplicates(std::vector<std::pair<char, std::string>>& input)
-{
-    input.erase(std::unique(input.begin(), input.end()), input.end());
+    //PAS 2 Luam prioritatile in ordine descrecatoare si aplicam lema 1 pentru situatii de tipul A->C (invers fata de pasul 1)
+	int k = m_priority.size() - 2;
+     noChangesMade = true;
+    while (k>=0)
+    {
+        noChangesMade = false;
+        for (auto& prod : m_productions)
+        {
+            if (GetPriority(prod.first) == k && GetPriority(prod.first) < GetPriority(prod.second[0]))
+            {
+                FngLema1(prod, 0);
+                noChangesMade = true;
+                break;
+            }
+     
+        }
+        if (!noChangesMade)
+        k--;
+    }
+    //PAS 3 Aici aplicam lema 1 unde este nevoie pentru Z Productii (in cazul nostru 0 ,1 ,2 etc)
+    noChangesMade = true;
+    while (noChangesMade)
+    {
+        noChangesMade = false;
+        for (auto& prod : m_productions)
+        {
+			if (std::isdigit(prod.first) && isNonTerminal(prod.second[0]))
+            {
+                FngLema1(prod, 0);
+                noChangesMade = true;
+                break;
+            }
+        }
+    }
 
 }
+
 void Grammar::FngLema1(std::pair<char, std::string>& production, size_t BPos)
 {
+	// Daca avem situatii de tipul A-> cv B cv , inlocuim pe B cu toate productiile lui , daca B are 3 productii o sa avem A->cv productia1 cv , A->cv productia2 cv , A->cv productia3 cv
+    //pozitia lui B e decisa de FNG (0 usually)
     char first = production.first;
     std::string right = production.second;
     char B = right[BPos];
@@ -225,22 +261,26 @@ void Grammar::FngLema1(std::pair<char, std::string>& production, size_t BPos)
 
 void Grammar::FngLema2(std::pair<char, std::string>& production)
 {
+    //Daca avem situatii de tipul C->C cv (recursivitate la stanga) , ca sa spargem recursivitatea la fiecare productie a lui C adaugam inca o productie cu un Z la urma
+    //Si 2 productii cu           Z-> cv , Z->cv Z  
     char first = production.first;
     std::string right = production.second;
-    std::pair<char, std::string> newProduction1 = std::make_pair('Z', right.substr(1, right.size()));
-    m_productions.push_back(newProduction1);
-    std::pair<char, std::string> newProduction2 = std::make_pair('Z', right.substr(1, right.size()) + 'Z');
-    m_productions.push_back(newProduction2);
-
     m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), production), m_productions.end());
+    std::pair<char, std::string> newProduction1 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()));
+    m_productions.push_back(newProduction1);
+    std::pair<char, std::string> newProduction2 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()) + m_newNonTerminal);
+    m_productions.push_back(newProduction2);
     for (auto& [nonTerminal, productions] : m_productions)
     {
         if (nonTerminal == first)
         {
-            m_productions.push_back(std::make_pair(nonTerminal, productions+'Z'));
+            m_productions.push_back(std::make_pair(nonTerminal, productions+ m_newNonTerminal));
         }
     }
-	if (!isNonTerminal('Z')) m_nonTerminals += 'Z';
+
+    m_nonTerminals += m_newNonTerminal;
+    m_newNonTerminal++;
+
 }
 
 bool Grammar::isNonTerminal(char symbol)
@@ -291,7 +331,7 @@ void Grammar::RemoveNonGeneratingSymbols()
     m_productions.erase(it, m_productions.end());
 }
 
-void Grammar::RemoveInaccessibleSymbols()
+void Grammar::RemoveInaccessibleSymbols() //Daca nu poate fi accesat un neterminal ,e degeaba deci il stergem
 {
     std::unordered_set<char> accessibleSymbols;
     std::unordered_set<char> newAccessibleSymbols;

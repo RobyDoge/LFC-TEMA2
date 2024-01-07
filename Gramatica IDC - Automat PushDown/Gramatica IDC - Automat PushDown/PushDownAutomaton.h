@@ -4,10 +4,11 @@
 #include <stack>
 #include <unordered_map>
 
+using string = std::string;
 class PushDownAutomaton
 {
-	using string = std::string;
 public:
+	PushDownAutomaton() =default;
 	~PushDownAutomaton() = default;
 	PushDownAutomaton(const Grammar& grammar);
 
@@ -16,7 +17,7 @@ public:
 	bool CheckWord(const string& checkWord);
 
 private:
-	bool CheckSymbolRecursive(string& currentState, std::stack<char>& currentStack, string& remainingWord);
+	bool CheckSymbolRecursive(string& currentState, std::stack<char>& stack, string& remainingWord);
 	bool DeterministicAutomatonCheckWord(const string& word);
 	bool NonDeterministicAutomatonCheckWord(const string& word);
 
