@@ -44,27 +44,24 @@ void Grammar::FNC()
     // PASUL 2
     std::set<std::pair<char, std::string>> newTerminals;
     int k = 0;
-    for (auto& [nonTerminal, production] : m_productions)
+    for (auto& output : m_productions | std::views::values)
     {
         //Daca membrul drept al productiei este format din 2 sau mai multe caractere
-        if (production.size() >= 2)
+        if (output.size() >= 2)
         {
-            for (size_t i = 0; i < production.size(); ++i)
+            for (const char symbol : output)
             {
-                if (!isNonTerminal(production[i]))  //Inlocuim fiecare terminal cu un nonTerminal creat de noi (deocamdata se duce de la C in colo, trb schimbat da nush exact cu ce)
+                if (!IsNonTerminal(symbol))  //Inlocuim fiecare terminal cu un nonTerminal creat de noi (deocamdata se duce de la C in colo, trb schimbat da nush exact cu ce)
                 {
                     char newNonTerminal = 'C' + k;
                     k++;
-                    newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, production[i])));
+                    newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, symbol)));
                     m_nonTerminals += newNonTerminal;
-                    auto temp = production[i];
+                    const auto temp = symbol;
 
                     // Parcurge toate perechile (cheie, valoare) în m_productions
-                    for (auto& prod : m_productions)
+                    for (auto& value : m_productions | std::views::values)
                     {
-                        auto& key = prod.first;
-                        auto& value = prod.second;
-
                         // Verifică dacă producția conține caracterul ce trebuie înlocuit
                         size_t pos = value.find(temp);
                         while (pos != std::string::npos)
@@ -82,38 +79,35 @@ void Grammar::FNC()
     //Adauga la productii terminalele + nonterminalele pe care le-au inlocuit spre exemplu C->a D->b etc.
     for (auto& [newNonTerminal, terminal] : newTerminals)
     {
-        m_productions.push_back(std::make_pair(newNonTerminal, terminal));
+        m_productions.emplace_back(newNonTerminal, terminal);
     }
     newTerminals.clear();
     // Pasul 3
-    for (auto& [nonTerminal, production] : m_productions)
+    for (auto& firstOutput : m_productions | std::views::values)
     {
         //Daca membrul drept al productiei este format din mai mult de 2 caractere 
-        if (production.size() > 2)
+        if (firstOutput.size() > 2)
         {
-            for (size_t i = 0; i < production.size(); ++i)
+            for (size_t i = 0; i < firstOutput.size(); ++i)
             {
-                if (isNonTerminal(production[i]) && production[i] == production[i + 1]) // Si exista 2 neterminale la fel consecutive, le inlocuim cu un NOU neterminal!(la fel ca la pasul 2)
+                if (IsNonTerminal(firstOutput[i]) && firstOutput[i] == firstOutput[i + 1]) // Si exista 2 neterminale la fel consecutive, le inlocuim cu un NOU neterminal!(la fel ca la pasul 2)
                 {
                     char newNonTerminal = 'C' + k;
                     k++;
-                    std::string temp(1, production[i]);
-                    temp += production[i + 1];
+                    std::string temp(1, firstOutput[i]);
+                    temp += firstOutput[i + 1];
                     newTerminals.insert(std::make_pair(newNonTerminal, temp));
                     i--;
                     // Parcurge toate perechile (cheie, valoare) în m_productions
-                    for (auto& prod : m_productions)
+                    for (auto& output : m_productions | std::views::values)
                     {
-                        auto& key = prod.first;
-                        auto& value = prod.second;
-
                         // Verifică dacă producția conține caracterul ce trebuie înlocuit
-                        size_t pos = value.find(temp);
+                        size_t pos = output.find(temp);
                         while (pos != std::string::npos)
                         {
                             // Înlocuiește caracterul în producție
-                            value.replace(pos, 2, 1, newNonTerminal);
-                            pos = value.find(temp);
+                            output.replace(pos, 2, 1, newNonTerminal);
+                            pos = output.find(temp);
                         }
                     }
                 }
@@ -122,7 +116,7 @@ void Grammar::FNC()
     }
     for (auto& [newNonTerminal, terminal] : newTerminals)
     {
-        m_productions.push_back(std::make_pair(newNonTerminal, terminal));
+        m_productions.emplace_back(newNonTerminal, terminal);
         m_nonTerminals += newNonTerminal;
     }
 }
@@ -132,13 +126,13 @@ void Grammar::EliminateUnitProductions()
 	std::vector<std::pair<char, std::string>> newProductions;
     for (const auto& [nonTerminal, productions] : m_productions)
     {
-        if (productions.size() == 1 && isNonTerminal(productions[0]))
+        if (productions.size() == 1 && IsNonTerminal(productions[0]))
         {
             for (const auto& [nonTerminal1, productions1] : m_productions)
             {
                 if (productions[0] == nonTerminal1)
                 {
-                    newProductions.push_back(std::make_pair(nonTerminal, productions1));
+                    newProductions.emplace_back(nonTerminal, productions1);
                 }
             }
 			m_productions.append_range(newProductions);
@@ -148,8 +142,8 @@ void Grammar::EliminateUnitProductions()
 
     auto it = m_productions.begin();
     while (it != m_productions.end()) {
-        const auto& [nonTerminal, productions] = *it;
-        if (productions.size() == 1 && isNonTerminal(productions[0])) {
+	    if (const auto& [nonTerminal, productions] = *it; 
+            productions.size() == 1 && IsNonTerminal(productions[0])) {
             it = m_productions.erase(it); // Șterge producția
         }
         else {
@@ -167,13 +161,13 @@ void Grammar::RemoveLambdaProductions()
         if (productions.size() == 1 && productions[0]=='$')
         {
 			lambdaNonTerminals.insert(nonTerminal);
-            m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), it), m_productions.end());
+            std::erase(m_productions, it);
         }
     }
-	if (lambdaNonTerminals.find(m_startSymbol) != lambdaNonTerminals.end())
+	if (lambdaNonTerminals.contains(m_startSymbol))
 	{
-		m_productions.push_back(std::make_pair(m_newNonTerminal, "$"));
-        m_productions.push_back(std::make_pair(m_newNonTerminal, std::string(1,m_startSymbol)));
+		m_productions.emplace_back(m_newNonTerminal, "$");
+        m_productions.emplace_back(m_newNonTerminal, std::string(1,m_startSymbol));
 		m_startSymbol = m_newNonTerminal;
         m_newNonTerminal++;
 		m_nonTerminals += m_newNonTerminal;
@@ -184,17 +178,17 @@ void Grammar::RemoveLambdaProductions()
     std::vector<std::pair<char, std::string>> newProductions;
     for (const auto& [nonTerminal, productions] : m_productions)
     {
-        if (productions.size() > 1 && lambdaNonTerminals.find(nonTerminal) != lambdaNonTerminals.end())
+        if (productions.size() > 1 && lambdaNonTerminals.contains(nonTerminal))
         {
             std::vector<int> uppercaseIndices;
             for (int i = 0; i < productions.size(); ++i) {
-                if (isNonTerminal(productions[i])) {
+                if (IsNonTerminal(productions[i])) {
                     uppercaseIndices.push_back(i);
                 }
             }
 
             // Calculate the total number of combinations, which is 2^count of uppercase letters
-            int totalCombinations = 1 << uppercaseIndices.size();
+            const int totalCombinations = 1 << uppercaseIndices.size();
             std::vector<std::string> combinations;
 
             // Iterate through all combinations
@@ -202,18 +196,19 @@ void Grammar::RemoveLambdaProductions()
                 std::string combination;
                 for (int i = 0; i < productions.size(); ++i) {
                     // If it's not an uppercase character, always include it
-                    if (!isNonTerminal(productions[i])) {
+                    if (!IsNonTerminal(productions[i])) {
                         combination += productions[i];
                     }
                     else {
                         // If it's an uppercase character, include it only if its corresponding bit is set in the mask
-                        int uppercaseIndex = std::distance(uppercaseIndices.begin(), std::find(uppercaseIndices.begin(), uppercaseIndices.end(), i));
+                        const int uppercaseIndex = std::distance(uppercaseIndices.begin(),
+                                                                 std::ranges::find(uppercaseIndices, i));
                         if (mask & (1 << uppercaseIndex)) {
                             combination += productions[i];
                         }
                     }
                 }
-                newProductions.push_back(std::make_pair(nonTerminal,combination));
+                newProductions.emplace_back(nonTerminal,combination);
             }
 
         }
@@ -232,11 +227,11 @@ void Grammar::CreatePriority()
     int k = 0;
     for (const auto& nonTerminal : m_nonTerminals)
     {
-        m_priority.push_back(std::make_pair(k++, nonTerminal));
+        m_priority.emplace_back(k++, nonTerminal);
     }
 }
 
-int Grammar::GetPriority(char symbol) {
+int Grammar::GetPriority(const char symbol) {
 	for (const auto& [priority, nonTerminal] : m_priority)
 	{
 		if (nonTerminal == symbol)
@@ -257,13 +252,13 @@ void Grammar::FNG()
         noChangesMade = false;
         for (auto& prod : m_productions)
         {
-            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
+            if (GetPriority(prod.first) > GetPriority(prod.second[0]) && IsNonTerminal(prod.second[0]) )
             {
                 FngLema1(prod, 0);
                 noChangesMade = true;
                 break;
             }
-            else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && isNonTerminal(prod.second[0]) )
+            else if (GetPriority(prod.first) == GetPriority(prod.second[0]) && IsNonTerminal(prod.second[0]) )
             {
                 FngLema2(prod);
                 noChangesMade = true;
@@ -297,7 +292,7 @@ void Grammar::FNG()
         noChangesMade = false;
         for (auto& prod : m_productions)
         {
-			if (std::isdigit(prod.first) && isNonTerminal(prod.second[0]))
+			if (std::isdigit(prod.first) && IsNonTerminal(prod.second[0]))
             {
                 FngLema1(prod, 0);
                 noChangesMade = true;
@@ -308,41 +303,41 @@ void Grammar::FNG()
 
 }
 
-void Grammar::FngLema1(std::pair<char, std::string>& production, size_t BPos)
+void Grammar::FngLema1(const std::pair<char, std::string>& production, const size_t BPos)
 {
 	// Daca avem situatii de tipul A-> cv B cv , inlocuim pe B cu toate productiile lui , daca B are 3 productii o sa avem A->cv productia1 cv , A->cv productia2 cv , A->cv productia3 cv
     //pozitia lui B e decisa de FNG (0 usually)
     char first = production.first;
-    std::string right = production.second;
-    char B = right[BPos];
+	const std::string right = production.second;
+	const char B = right[BPos];
 	std::vector<std::pair<char, std::string>> newProductions;
     for (const auto& [nonTerminal, productions] : m_productions)
     {
         if (nonTerminal == B)
         {
-            newProductions.push_back(std::make_pair(first, right.substr(0, BPos) + productions + right.substr(BPos + 1, right.size())));
+            newProductions.emplace_back(first, right.substr(0, BPos) + productions + right.substr(BPos + 1, right.size()));
         }
     }
-    m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), production), m_productions.end());
+    std::erase(m_productions, production);
 	m_productions.append_range(newProductions);
 }
 
-void Grammar::FngLema2(std::pair<char, std::string>& production)
+void Grammar::FngLema2(const std::pair<char, std::string>& production)
 {
     //Daca avem situatii de tipul C->C cv (recursivitate la stanga) , ca sa spargem recursivitatea la fiecare productie a lui C adaugam inca o productie cu un Z la urma
     //Si 2 productii cu           Z-> cv , Z->cv Z  
-    char first = production.first;
-    std::string right = production.second;
-    m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), production), m_productions.end());
-    std::pair<char, std::string> newProduction1 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()));
+    const char first = production.first;
+    const std::string right = production.second;
+    std::erase(m_productions, production);
+    const std::pair<char, std::string> newProduction1 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()));
     m_productions.push_back(newProduction1);
-    std::pair<char, std::string> newProduction2 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()) + m_newNonTerminal);
+    const std::pair<char, std::string> newProduction2 = std::make_pair(m_newNonTerminal, right.substr(1, right.size()) + m_newNonTerminal);
     m_productions.push_back(newProduction2);
     for (auto& [nonTerminal, productions] : m_productions)
     {
         if (nonTerminal == first)
         {
-            m_productions.push_back(std::make_pair(nonTerminal, productions+ m_newNonTerminal));
+            m_productions.emplace_back(nonTerminal, productions+ m_newNonTerminal);
         }
     }
 
@@ -351,9 +346,9 @@ void Grammar::FngLema2(std::pair<char, std::string>& production)
 
 }
 
-bool Grammar::isNonTerminal(char symbol)
+bool Grammar::IsNonTerminal(const char symbol)
 {
-    return std::find(m_nonTerminals.begin(), m_nonTerminals.end(), symbol) != m_nonTerminals.end();
+    return std::ranges::find(m_nonTerminals, symbol) != m_nonTerminals.end();
 }
 
 void Grammar::RemoveNonGeneratingSymbols()
@@ -372,16 +367,14 @@ void Grammar::RemoveNonGeneratingSymbols()
     {
         changesMade = false;
 
-        for (const auto& prod : m_productions)
+        for (const auto& [inputSymbol, outputSymbols] : m_productions)
         {
-            auto& inputSymbol = prod.first;
-            auto& outputSymbols = prod.second;
 
-            if ((std::all_of(outputSymbols.begin(), outputSymbols.end(), [&](char symbol)
-                { return generatingSymbols.find(symbol) != generatingSymbols.end(); }) ||
+            if ((std::ranges::all_of(outputSymbols, [&](const char symbol)
+                                     { return generatingSymbols.contains(symbol); }) ||
                 outputSymbols.empty() || // Verificăm dacă producția include simbolul vid
                 (outputSymbols.size() == 1 && outputSymbols[0] == '$')) && // Verificăm simbolul "$"
-                generatingSymbols.find(inputSymbol) == generatingSymbols.end())
+	            !generatingSymbols.contains(inputSymbol))
             {
                 generatingSymbols.insert(inputSymbol);
                 changesMade = true;
@@ -390,12 +383,11 @@ void Grammar::RemoveNonGeneratingSymbols()
     }
 
     // Eliminăm simbolurile care nu generează cuvinte din m_nonTerminals și m_productions
-    m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
-        [&](char symbol) { return generatingSymbols.find(symbol) == generatingSymbols.end(); }),
-        m_nonTerminals.end());
+    std::erase_if(m_nonTerminals,
+                  [&](const char symbol) { return !generatingSymbols.contains(symbol); });
 
-    auto it = std::remove_if(m_productions.begin(), m_productions.end(),
-        [&](const auto& prod) { return generatingSymbols.find(prod.first) == generatingSymbols.end(); });
+    const auto it = std::ranges::remove_if(m_productions,
+                                           [&](const auto& prod) { return !generatingSymbols.contains(prod.first); }).begin();
     m_productions.erase(it, m_productions.end());
 }
 
@@ -410,7 +402,7 @@ void Grammar::RemoveInaccessibleSymbols() //Daca nu poate fi accesat un netermin
 
     while (!newAccessibleSymbols.empty())
     {
-        char symbol = *newAccessibleSymbols.begin();
+	    const char symbol = *newAccessibleSymbols.begin();
         newAccessibleSymbols.erase(newAccessibleSymbols.begin());
 
         for (const auto& [left, right] : m_productions)
@@ -419,8 +411,8 @@ void Grammar::RemoveInaccessibleSymbols() //Daca nu poate fi accesat un netermin
             {
                 for (char VNonT : right)
                 {
-                    if (isNonTerminal(VNonT) &&
-                        accessibleSymbols.find(VNonT) == accessibleSymbols.end())
+                    if (IsNonTerminal(VNonT) &&
+	                    !accessibleSymbols.contains(VNonT))
                     {
                         newAccessibleSymbols.insert(VNonT);
                         accessibleSymbols.insert(VNonT);
@@ -431,12 +423,11 @@ void Grammar::RemoveInaccessibleSymbols() //Daca nu poate fi accesat un netermin
     }
 
     // Eliminăm simbolurile inaccesibile din m_nonTerminals și m_productions
-    m_nonTerminals.erase(std::remove_if(m_nonTerminals.begin(), m_nonTerminals.end(),
-        [&](char symbol) { return accessibleSymbols.find(symbol) == accessibleSymbols.end(); }),
-        m_nonTerminals.end());
+    std::erase_if(m_nonTerminals,
+                  [&](const char symbol) { return !accessibleSymbols.contains(symbol); });
 
-    auto it = std::remove_if(m_productions.begin(), m_productions.end(),
-        [&](const auto& prod) { return accessibleSymbols.find(prod.first) == accessibleSymbols.end(); });
+    const auto it = std::ranges::remove_if(m_productions,
+                                           [&](const auto& prod) { return !accessibleSymbols.contains(prod.first); }).begin();
     m_productions.erase(it, m_productions.end());
 }
 
@@ -496,7 +487,7 @@ std::ostream& operator<<(std::ostream& out, const Grammar& grammar)
         out << inputSymbol;
         out << " -> ";
         out << outputSymbols;
-        out << std::endl;
+        out << '\n';
     }
     return out;
 }
