@@ -31,9 +31,9 @@ private:
 	void RemoveInaccessibleSymbols();
 	void RemoveLambdaProductions();
 	void EliminateUnitProductions();
-	void FngLema1(std::pair< char, std::string>& production, size_t BPos);
-	void FngLema2(std::pair<char, std::string>& production);
-    bool isNonTerminal(char symbol);
+	void FngLema1(const std::pair< char, std::string>& production, size_t BPos);
+	void FngLema2(const std::pair<char, std::string>& production);
+    bool IsNonTerminal(char symbol);
 	void CreatePriority();
 	int GetPriority(char symbol);
 
@@ -41,6 +41,7 @@ private:
 	std::string m_nonTerminals;
 	std::string m_terminals;
 	char m_startSymbol;
+
 	std::vector<std::pair<char,std::string>> m_productions;
 	std::string m_lastWord{};
 	std::vector<std::pair<int, char>> m_priority;

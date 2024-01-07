@@ -66,9 +66,13 @@ void Menu::PrintRegularExpression() const
 
 void Menu::InputAndVerifyWord()
 {
-	std::string word;
+	std::string word{};
 	std::cout << "Input a word: ";
 	std::cin >> word;
+
+	if(word == "$")
+		word.clear();
+
 	std::string wordStatus = m_automaton.CheckWord(word) ? "Accepted" : "Rejected";
 	std::cout << std::format("\nThe Word Is {} By The Automaton.", wordStatus);
 }
