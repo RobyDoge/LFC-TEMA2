@@ -21,12 +21,14 @@
   <ItemGroup>
     <ClInclude Include="DeterministicFiniteAutomaton.h" />
     <ClInclude Include="ExpressionToAutomaton.h" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="PolishForm.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeterministicFiniteAutomaton.cpp" />
     <ClCompile Include="ExpressionToAutomaton.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Menu.cpp" />
     <ClCompile Include="PolishForm.cpp" />
   </ItemGroup>
   <ItemGroup>

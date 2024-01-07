@@ -211,6 +211,6 @@ void ExpressionToAutomaton::KleeneStarStep(char& index)
 
 void ExpressionToAutomaton::EliminateDuplicates(std::string& string)
 {
-	std::sort(string.begin(), string.end());
-	std::unique(string.begin(), string.end());
+	std::ranges::sort(string);
+	string.erase(std::ranges::unique(string).begin(), string.end());
 }
