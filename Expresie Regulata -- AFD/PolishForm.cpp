@@ -8,8 +8,8 @@ PolishForm::PolishForm(std::string expression)
 {
 	ToPolishForm(expression);
 
-    std::cout << "Infix Expression: " << expression << std::endl;
-    std::cout << "Polish Form: " << m_result << std::endl;
+    //std::cout << "Infix Expression: " << expression << std::endl;
+    //std::cout << "Polish Form: " << m_result << std::endl;
 }
 
 std::string PolishForm::GetResult()

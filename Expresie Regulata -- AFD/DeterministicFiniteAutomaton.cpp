@@ -2,6 +2,7 @@
 #include <ranges>
 #include <algorithm>
 #include <format>
+#include <fstream>
 #include <ostream>
 
 using string = std::string;
@@ -21,7 +22,7 @@ void DeterministicFiniteAutomaton::SetStartState(const char& startState)
 	m_startState = startState;
 }
 
-void DeterministicFiniteAutomaton::SetFinalStates(const std::vector<char>& finalStates)
+void DeterministicFiniteAutomaton::SetFinalStates(const string& finalStates)
 {
 	m_finalStates = finalStates;
 }
@@ -46,7 +47,7 @@ char DeterministicFiniteAutomaton::GetStartState() const
 	return m_startState;
 }
 
-std::vector<char> DeterministicFiniteAutomaton::GetFinalStates() const
+string DeterministicFiniteAutomaton::GetFinalStates() const
 {
 	return m_finalStates;
 }
@@ -66,20 +67,15 @@ bool DeterministicFiniteAutomaton::VerifyAutomaton()
 
 bool DeterministicFiniteAutomaton::CheckWord(const string& word)
 {
-	auto currentState = m_startState;
-	for (const auto& symbol : word)
-	{
-		auto transition = std::ranges::find_if(m_transitions, [&](const auto& transitionFunction)
-		{
-			return transitionFunction.first[0] == currentState && transitionFunction.first[1] == symbol;
-		});
-		if (transition == m_transitions.end())
-		{
-			return false;
-		}
-		currentState = transition->second;
-	}
-	return std::ranges::find(m_finalStates, currentState) != m_finalStates.end();
+	const string& wordToBeChecked = word;
+	return CheckWordRecursive(wordToBeChecked, m_startState);
+}
+
+void DeterministicFiniteAutomaton::SaveToDisk(const string& fileName) const
+{
+	std::ofstream file(fileName);
+	file << *this;
+	file.close();
 }
 
 bool DeterministicFiniteAutomaton::IsDeterministic()
@@ -114,6 +110,49 @@ bool DeterministicFiniteAutomaton::StateTransitionFunctionsValidation()
 			std::ranges::find(m_inputAlphabet, transitionFunction.first[1]) != m_inputAlphabet.end() &&
 			std::ranges::find(m_states, transitionFunction.second) != m_states.end();
 	});
+}
+
+bool DeterministicFiniteAutomaton::CheckWordRecursive(const string& remainingWord, char currentState)
+{
+	if (remainingWord.empty() && std::ranges::find(m_finalStates, currentState) != m_finalStates.end())
+	{
+		return true;
+	}
+	if (remainingWord.empty() && std::ranges::find(m_finalStates, currentState) == m_finalStates.end())
+	{
+		return false;
+	}
+
+	for (int symbolPosition = 0; symbolPosition < remainingWord.size(); symbolPosition++)
+	{
+		char symbol = remainingWord[symbolPosition];
+		const string keySymbol = std::format("{}{}", currentState, symbol);
+		const string keyLambda = std::format("{}{}", currentState, '$');
+		std::vector<std::pair<std::string,char>>availableTransitionFunctions;
+		for (const auto& [inputSymbol, outputSymbols] : m_transitions)
+		{
+			if (inputSymbol == keySymbol || inputSymbol == keyLambda)
+			{
+				availableTransitionFunctions.emplace_back(inputSymbol, outputSymbols);
+			}
+		}
+
+		const bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
+			{
+				currentState = transitionFunction.second;
+				if (string newWord = remainingWord.substr(symbolPosition + 1);
+					CheckWordRecursive(newWord,currentState))
+				{
+					return true;
+				}
+				return false;
+			});
+
+		return aux;
+	}
+	//this should never happen
+	return false;
+
 }
 
 std::ostream& operator<<(std::ostream& os, const DeterministicFiniteAutomaton& automaton)

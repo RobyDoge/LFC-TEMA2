@@ -1,0 +1,16 @@
+Deterministic Finite Automaton: M = ({A,B,D,F,R,T,Z},{$,a,b,c},P,A,{Z}).
+P containing the following transitions : 
+P(A,a) -> (B)
+P(B,b) -> (D)
+P(G,a) -> (H)
+P(O,$) -> (G)
+P(O,$) -> (K)
+P(D,a) -> (F)
+P(R,c) -> (T)
+P(H,a) -> (J)
+P(K,b) -> (L)
+P(J,$) -> (P)
+P(L,b) -> (N)
+P(N,$) -> (P)
+P(U,a) -> (V)
+P(V,b) -> (X)
