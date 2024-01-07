@@ -161,8 +161,11 @@ void ExpressionToAutomaton::OrStep(char& index)
 	transitions.insert({ { firstAutomaton.GetFinalStates()[0], '$' }, index + 1 });
 	transitions.insert({ { secondAutomaton.GetFinalStates()[0], '$' }, index + 1 });
 
+	std::string inputAlphabet = firstAutomaton.GetInputAlphabet() + secondAutomaton.GetInputAlphabet() + '$';
+	EliminateDuplicates(inputAlphabet);
+
 	newAutomaton.SetStates(firstAutomaton.GetStates() + secondAutomaton.GetStates() + index + char(index + 1));
-	newAutomaton.SetInputAlphabet(firstAutomaton.GetInputAlphabet() + secondAutomaton.GetInputAlphabet() + '$');
+	newAutomaton.SetInputAlphabet(inputAlphabet);
 	newAutomaton.SetStartState(index);
 	newAutomaton.SetFinalStates({ char(index + 1) });
 	newAutomaton.SetTransitions(transitions);
@@ -188,11 +191,19 @@ void ExpressionToAutomaton::KleeneStarStep(char& index)
 	m_intermediateAutomatons.pop();
 
 	DeterministicFiniteAutomaton newAutomaton;
+	std::string inputAlphabet = automaton.GetInputAlphabet() + '$';
+	EliminateDuplicates(inputAlphabet);
+	std::unordered_multimap<string, char> transitions = automaton.GetTransitions();
+	transitions.insert({ { index, '$' }, automaton.GetStartState() });
+	transitions.insert({ { automaton.GetFinalStates()[0], '$' }, index + 1 });
+	transitions.insert({ { automaton.GetFinalStates()[0], '$' }, automaton.GetStartState() });
+	transitions.insert({ { index, '$' }, index + 1 });
+
 	newAutomaton.SetStates(automaton.GetStates() + index + char(index + 1));
-	newAutomaton.SetInputAlphabet(automaton.GetInputAlphabet() + '$');
+	newAutomaton.SetInputAlphabet(inputAlphabet);
 	newAutomaton.SetStartState(index);
 	newAutomaton.SetFinalStates({ char(index + 1) });
-	newAutomaton.SetTransitions(automaton.GetTransitions());
+	newAutomaton.SetTransitions(transitions);
 
 	index += 2;
 	m_intermediateAutomatons.push(newAutomaton);
