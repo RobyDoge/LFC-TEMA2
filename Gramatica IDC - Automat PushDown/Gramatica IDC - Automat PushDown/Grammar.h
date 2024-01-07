@@ -23,6 +23,7 @@ public:
 	void SimplifyGrammar();
 	void FNC();
 	void FNG();
+	void RemoveLambdaProductions();
 private:
 	void RemoveDuplicates(std::vector<std::pair<char, std::string>>& input);
 	static std::string ApplyRandomProduction(const std::string& input, std::pair<char, std::string> production);
@@ -32,7 +33,7 @@ private:
 	void EliminateUnitProductions();
 	void FngLema1(std::pair< char, std::string>& production, size_t BPos);
 	void FngLema2(std::pair<char, std::string>& production);
-	bool isNonTerminal(char symbol);
+    bool isNonTerminal(char symbol);
 	void CreatePriority();
 	int GetPriority(char symbol);
 

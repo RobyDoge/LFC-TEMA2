@@ -158,6 +158,62 @@ void Grammar::EliminateUnitProductions()
     }
 }
 
+void Grammar::RemoveLambdaProductions()
+{
+    std::unordered_set<char> lambdaNonTerminals;
+    for (const auto& [nonTerminal, productions] : m_productions)
+    {
+        if (productions.size() == 1 && productions[0]=='$')
+        {
+			lambdaNonTerminals.insert(nonTerminal);
+          //  m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), productions), m_productions.end());
+        }
+    }
+    std::vector<std::pair<char, std::string>> newProductions;
+    for (const auto& [nonTerminal, productions] : m_productions)
+    {
+        if (productions.size() > 1 && lambdaNonTerminals.find(nonTerminal) != lambdaNonTerminals.end())
+        {
+            std::vector<int> uppercaseIndices;
+            for (int i = 0; i < productions.size(); ++i) {
+                if (isNonTerminal(productions[i])) {
+                    uppercaseIndices.push_back(i);
+                }
+            }
+
+            // Calculate the total number of combinations, which is 2^count of uppercase letters
+            int totalCombinations = 1 << uppercaseIndices.size();
+            std::vector<std::string> combinations;
+
+            // Iterate through all combinations
+            for (int mask = 0; mask < totalCombinations-1; ++mask) {
+                std::string combination;
+                for (int i = 0; i < productions.size(); ++i) {
+                    // If it's not an uppercase character, always include it
+                    if (!isNonTerminal(productions[i])) {
+                        combination += productions[i];
+                    }
+                    else {
+                        // If it's an uppercase character, include it only if its corresponding bit is set in the mask
+                        int uppercaseIndex = std::distance(uppercaseIndices.begin(), std::find(uppercaseIndices.begin(), uppercaseIndices.end(), i));
+                        if (mask & (1 << uppercaseIndex)) {
+                            combination += productions[i];
+                        }
+                    }
+                }
+                newProductions.push_back(std::make_pair(nonTerminal,combination));
+            }
+
+        }
+    }
+	m_productions.append_range(newProductions);
+
+
+
+
+}
+
+
 void Grammar::CreatePriority()
 {
 	//Creeaza un vector de perechi <prioritate, neterminal> (avem nevoie de prioritati pt FNG)

@@ -1,6 +1,7 @@
-SA
-abc
+SABC
+abc$
 S
-S abA
+S aABbcC
+S $
 A aAbb
 A acbb
