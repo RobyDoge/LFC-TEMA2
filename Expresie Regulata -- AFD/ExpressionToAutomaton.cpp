@@ -29,6 +29,7 @@ DeterministicFiniteAutomaton ExpressionToAutomaton::CreateAutomatonFromPolishFor
 		}
 		else if(character == '*')
 		{
+
 			KleeneStarStep(index);
 		}
 	}
@@ -38,9 +39,76 @@ DeterministicFiniteAutomaton ExpressionToAutomaton::CreateAutomatonFromPolishFor
 	return automaton;
 }
 
+
+//checks if the expression contains only valid characters
+//checks if the expression contains only valid operators
+//check if there are enough operands for each operator and the operators have a correct placement
+//checks if the number of open parantheses is equal to the number of closed parantheses
+//checks if the . operator has operands on both sides
+//checks if the | operator has operands on both sides
+//checks if the * operator has an operand on the left side or a closed paranthesis
+
 bool ExpressionToAutomaton::IsExpressionValid()
 {
-	return true;
+	std::stack<char> parenthesesStack;
+
+	// Helper function to check if a character is a valid operand
+	auto isValidOperand = [](char c)
+	{
+		return isalnum(c) || isdigit(c);
+
+	};
+
+	int operatorIndex = 0;
+
+	for (char c : m_expression) 
+	{
+		//if we encounter an open paranthesis we push it on the stack
+		if (c == '(') 
+		{
+			parenthesesStack.push(c);
+		}
+
+		//if we encounter a closed paranthesis we check if the stack is empty or if the top of the stack is an open paranthesis
+		else if (c == ')') 
+		{
+			if (parenthesesStack.empty() || parenthesesStack.top() != '(') {
+				return false; // Mismatched parentheses
+			}
+			parenthesesStack.pop();
+		}
+
+		//if we encounter a "." or a "|" operator we check if there are valid operands on both sides of the operator
+		else if (c == '.' || c == '|') 
+		{
+			// Check if there is a valid operand on the left side of the operator or a closed paranthesis
+			if (!isValidOperand(m_expression[operatorIndex - 1]) && 
+				(m_expression[operatorIndex - 1] != '*' && m_expression[operatorIndex - 1] != ')')
+				) 
+			{
+				return false; // Operator without a valid left operand
+			}
+
+			// Check if there is a valid operand on the right side of the operator or an open paranthesis
+			if (!isValidOperand(m_expression[operatorIndex + 1]) && m_expression[operatorIndex+1]!='(') 
+			{
+				return false; // Operator without a valid right operand
+			}
+		}
+		else if (c == '*') 
+		{
+			if (!isValidOperand(m_expression[operatorIndex - 1]) && m_expression[operatorIndex - 1] != ')')
+			{
+				return false; // Operator without a valid left operand
+			}
+		}
+		else if (!isValidOperand(c) &&!isalnum(c)) {
+			return false; // Invalid character
+		}
+		operatorIndex++;
+	}
+
+	return parenthesesStack.empty(); // All parentheses are closed
 }
 
 std::string ExpressionToAutomaton::GetExpression()
@@ -100,7 +168,8 @@ void ExpressionToAutomaton::ConcatenationStep()
 	char finalState = secondAutomaton.GetFinalStates()[0];//D
 	// the 3 states: A, B, D
 	// C is not a state anymore, it coincides with B
-	std::string states = firstAutomaton.GetStates() + finalState;
+	std::string states = firstAutomaton.GetStates() + secondAutomaton.GetStates();
+	states.erase(std::remove(states.begin(), states.end(), secondAutomaton.GetStartState()), states.end());
 	std::unordered_multimap<string, char> transitions = firstAutomaton.GetTransitions();// A->B
 	std::string inputAlphabet = firstAutomaton.GetInputAlphabet() + secondAutomaton.GetInputAlphabet();
 
