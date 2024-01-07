@@ -1,7 +1,10 @@
 SABC
-abc$
+ab$
 S
-S aABbcC
+S AB
 S $
-A aAbb
-A acbb
+A BS
+A b
+B SA
+B a
+C a

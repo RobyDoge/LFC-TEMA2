@@ -175,8 +175,8 @@ void Grammar::RemoveLambdaProductions()
 		m_productions.push_back(std::make_pair(m_newNonTerminal, "$"));
         m_productions.push_back(std::make_pair(m_newNonTerminal, std::string(1,m_startSymbol)));
 		m_startSymbol = m_newNonTerminal;
-        m_newNonTerminal++;
 		m_nonTerminals += m_newNonTerminal;
+        m_newNonTerminal++;
 	}
 
 
@@ -213,16 +213,13 @@ void Grammar::RemoveLambdaProductions()
                         }
                     }
                 }
+                if(!combination.empty())
                 newProductions.push_back(std::make_pair(nonTerminal,combination));
             }
 
         }
     }
 	m_productions.append_range(newProductions);
-
-
-
-
 }
 
 
