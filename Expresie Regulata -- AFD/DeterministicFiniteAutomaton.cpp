@@ -114,44 +114,51 @@ bool DeterministicFiniteAutomaton::StateTransitionFunctionsValidation()
 
 bool DeterministicFiniteAutomaton::CheckWordRecursive(const string& remainingWord, char currentState)
 {
+
 	if (remainingWord.empty() && std::ranges::find(m_finalStates, currentState) != m_finalStates.end())
 	{
 		return true;
 	}
 	if (remainingWord.empty() && std::ranges::find(m_finalStates, currentState) == m_finalStates.end())
 	{
-		return false;
-	}
-
-	for (int symbolPosition = 0; symbolPosition < remainingWord.size(); symbolPosition++)
-	{
-		char symbol = remainingWord[symbolPosition];
-		const string keySymbol = std::format("{}{}", currentState, symbol);
-		const string keyLambda = std::format("{}{}", currentState, '$');
-		std::vector<std::pair<std::string,char>>availableTransitionFunctions;
-		for (const auto& [inputSymbol, outputSymbols] : m_transitions)
-		{
-			if (inputSymbol == keySymbol || inputSymbol == keyLambda)
+		return std::ranges::any_of(m_transitions, [&](const auto& transitionFunction)
 			{
-				availableTransitionFunctions.emplace_back(inputSymbol, outputSymbols);
-			}
-		}
-
-		const bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
-			{
-				currentState = transitionFunction.second;
-				if (string newWord = remainingWord.substr(symbolPosition + 1);
-					CheckWordRecursive(newWord,currentState))
-				{
-					return true;
-				}
-				return false;
+				return transitionFunction.first[0] == currentState
+					&& transitionFunction.first[1] == '$'
+					&& std::ranges::find(m_finalStates, transitionFunction.second) == m_finalStates.end();
 			});
-
-		return aux;
 	}
-	//this should never happen
-	return false;
+
+	char symbol = remainingWord[0];
+	const string keySymbol = std::format("{}{}", currentState, symbol);
+	const string keyLambda = std::format("{}{}", currentState, '$');
+	std::vector<std::pair<std::string, char>> availableTransitionFunctions;
+	for (const auto& [inputSymbol, outputSymbols] : m_transitions)
+	{
+		if (inputSymbol == keySymbol || inputSymbol == keyLambda)
+		{
+			availableTransitionFunctions.emplace_back(inputSymbol, outputSymbols);
+		}
+	}
+
+	const bool aux = std::ranges::any_of(availableTransitionFunctions, [&](const auto& transitionFunction)
+	{
+			int symbolPosition{ 0 };
+		currentState = transitionFunction.second;
+		if (transitionFunction.first[1] == '$')
+		{
+			symbolPosition--;
+		}
+		if (const string newWord = remainingWord.substr(symbolPosition + 1);
+			CheckWordRecursive(newWord, currentState))
+		{
+			return true;
+		}
+		return false;
+	});
+
+	return aux;
+	
 
 }
 
