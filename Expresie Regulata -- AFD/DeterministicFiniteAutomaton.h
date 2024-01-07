@@ -15,6 +15,7 @@ public:
 	void SetStartState(const char& startState);
 	void SetFinalStates(const std::vector<char>& finalStates);
 	void SetTransitions(const std::unordered_multimap<string, char>& transitions);
+
 	string GetStates() const;
 	string GetInputAlphabet() const;
 	char GetStartState() const;

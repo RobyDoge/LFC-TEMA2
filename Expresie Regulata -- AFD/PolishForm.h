@@ -17,6 +17,6 @@ private:
 
 private:
 	static int GetOperatorPrecedence(char op);
-	std::string ToPolishForm(const std::string& expression);
+	void ToPolishForm(const std::string& expression);
 };
 

@@ -12,7 +12,8 @@ int main()
 	if (expressionToAutomaton.IsExpressionValid())
 	{
 		std::cout << "The expression is valid" << std::endl;
-		PolishForm(expressionToAutomaton.GetExpression());
+		expressionToAutomaton.SetPolishForm();
+		expressionToAutomaton.CreateAutomatonFromPolishForm();
 	}
 	else
 	{

@@ -1,9 +1,9 @@
 #pragma once
-#include <list>
+#include <stack>
 #include <string>
 #include <istream>
 
-#include "PolishForm.h"
+#include "DeterministicFiniteAutomaton.h"
 
 class ExpressionToAutomaton
 {
@@ -11,6 +11,9 @@ public:
 	ExpressionToAutomaton() = default;
 	ExpressionToAutomaton(std::istream& input);
 	~ExpressionToAutomaton() = default;
+
+public:
+	DeterministicFiniteAutomaton CreateAutomatonFromPolishForm();
 
 	bool IsExpressionValid();
 
@@ -20,13 +23,17 @@ public:
 
 private:
 	std::string m_expression;
-	std::list<char> m_operators;
-	std::list<char> m_states;
+	std::string m_polishForm;
 
-	PolishForm m_polishForm;
-	//after the polish form is created, we will use it to create the automaton
-	//via the CreateAutomatonFromPolishForm() method
-	//DeterministicFiniteAutomaton m_automaton;
+	std::stack<DeterministicFiniteAutomaton> m_intermediateAutomatons;
 
+private:
+	void LetterStep(char& index, char character);
+	void ConcatenationStep();
+	void OrStep(char& index);
+	void KleeneStarStep(char& index);
+
+
+	void EliminateDuplicates(std::string& string);
 };
 
