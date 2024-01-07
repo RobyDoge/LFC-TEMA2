@@ -23,13 +23,13 @@ public:
 	void SimplifyGrammar();
 	void FNC();
 	void FNG();
-	void RemoveLambdaProductions();
 private:
 	void RemoveDuplicates(std::vector<std::pair<char, std::string>>& input);
 	static std::string ApplyRandomProduction(const std::string& input, std::pair<char, std::string> production);
 	void CreateProductions(std::ifstream& input);
 	void RemoveNonGeneratingSymbols();
 	void RemoveInaccessibleSymbols();
+	void RemoveLambdaProductions();
 	void EliminateUnitProductions();
 	void FngLema1(std::pair< char, std::string>& production, size_t BPos);
 	void FngLema2(std::pair<char, std::string>& production);
@@ -44,6 +44,6 @@ private:
 	std::vector<std::pair<char,std::string>> m_productions;
 	std::string m_lastWord{};
 	std::vector<std::pair<int, char>> m_priority;
-	char m_newNonTerminal = '0';
+	char m_newNonTerminal = '1';
 
 };

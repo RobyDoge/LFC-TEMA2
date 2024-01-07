@@ -161,14 +161,26 @@ void Grammar::EliminateUnitProductions()
 void Grammar::RemoveLambdaProductions()
 {
     std::unordered_set<char> lambdaNonTerminals;
-    for (const auto& [nonTerminal, productions] : m_productions)
+    for (const auto& it : m_productions)
     {
+		auto [nonTerminal, productions] = it;
         if (productions.size() == 1 && productions[0]=='$')
         {
 			lambdaNonTerminals.insert(nonTerminal);
-          //  m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), productions), m_productions.end());
+            m_productions.erase(std::remove(m_productions.begin(), m_productions.end(), it), m_productions.end());
         }
     }
+	if (lambdaNonTerminals.find(m_startSymbol) != lambdaNonTerminals.end())
+	{
+		m_productions.push_back(std::make_pair(m_newNonTerminal, "$"));
+        m_productions.push_back(std::make_pair(m_newNonTerminal, std::string(1,m_startSymbol)));
+		m_startSymbol = m_newNonTerminal;
+        m_newNonTerminal++;
+		m_nonTerminals += m_newNonTerminal;
+	}
+
+
+
     std::vector<std::pair<char, std::string>> newProductions;
     for (const auto& [nonTerminal, productions] : m_productions)
     {
@@ -496,6 +508,7 @@ std::string Grammar::GetLastWord()
 
 void Grammar::SimplifyGrammar()
 {
+    RemoveLambdaProductions();
     EliminateUnitProductions();
     RemoveNonGeneratingSymbols();
     RemoveInaccessibleSymbols();
