@@ -1,10 +1,6 @@
-SABC
-ab$
+SB
+ab
 S
-S AB
-S $
-A BS
-A b
-B SA
-B a
-C a
+S aSB
+S aB
+B b

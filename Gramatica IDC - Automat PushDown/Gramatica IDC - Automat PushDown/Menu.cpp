@@ -60,7 +60,7 @@ void Menu::GeneratedWord() const
 	std::string word (1,m_grammar->GetStartSymbol());
 	bool showSteps;
 	char choice;
-	int attempts{20};
+	int attempts{50};
 
 	std::cout << "Should the steps be shown? (Y/N)\n";
 	if (std::cin >> choice;
@@ -109,7 +109,7 @@ void Menu::GeneratedAndVerifyWord() const
 {
 	std::stringstream output;
 	std::string word(1, m_grammar->GetStartSymbol());
-	int attempts{20};
+	int attempts{50};
 	std::string generatedWord{};
 	while (attempts)
 	{

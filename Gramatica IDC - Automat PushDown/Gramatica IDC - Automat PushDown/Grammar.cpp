@@ -53,10 +53,11 @@ void Grammar::FNC()
             {
                 if (!IsNonTerminal(symbol))  //Inlocuim fiecare terminal cu un nonTerminal creat de noi (deocamdata se duce de la C in colo, trb schimbat da nush exact cu ce)
                 {
-                    char newNonTerminal = 'C' + k;
-                    k++;
+                    char newNonTerminal = m_newNonTerminal;
                     newTerminals.insert(std::make_pair(newNonTerminal, std::string(1, symbol)));
                     m_nonTerminals += newNonTerminal;
+
+					m_newNonTerminal++;
                     const auto temp = symbol;
 
                     // Parcurge toate perechile (cheie, valoare) în m_productions
@@ -86,14 +87,15 @@ void Grammar::FNC()
     for (auto& firstOutput : m_productions | std::views::values)
     {
         //Daca membrul drept al productiei este format din mai mult de 2 caractere 
-        if (firstOutput.size() > 2)
+        while (firstOutput.size() > 2)
         {
-            for (size_t i = 0; i < firstOutput.size(); ++i)
+            for (size_t i = 1; i < firstOutput.size(); ++i)
             {
-                if (IsNonTerminal(firstOutput[i]) && firstOutput[i] == firstOutput[i + 1]) // Si exista 2 neterminale la fel consecutive, le inlocuim cu un NOU neterminal!(la fel ca la pasul 2)
+                if (IsNonTerminal(firstOutput[i]) && IsNonTerminal(firstOutput[i+1])) // Si exista 2 neterminale consecutive, le inlocuim cu un NOU neterminal!(la fel ca la pasul 2)
                 {
-                    char newNonTerminal = 'C' + k;
-                    k++;
+                    char newNonTerminal = m_newNonTerminal;
+                    m_nonTerminals += newNonTerminal;
+					m_newNonTerminal++;
                     std::string temp(1, firstOutput[i]);
                     temp += firstOutput[i + 1];
                     newTerminals.insert(std::make_pair(newNonTerminal, temp));
@@ -117,7 +119,6 @@ void Grammar::FNC()
     for (auto& [newNonTerminal, terminal] : newTerminals)
     {
         m_productions.emplace_back(newNonTerminal, terminal);
-        m_nonTerminals += newNonTerminal;
     }
 }
 
