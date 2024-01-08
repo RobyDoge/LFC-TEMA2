@@ -26,6 +26,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const DeterministicFiniteAutomaton& automaton);
 	bool CheckWord(const string& word);
 	void SaveToDisk(const string& fileName) const;
+
 private:
 	bool IsDeterministic();
 	bool StartingStateValidation();

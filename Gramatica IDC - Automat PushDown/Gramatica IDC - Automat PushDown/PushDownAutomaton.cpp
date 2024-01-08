@@ -18,7 +18,6 @@ PushDownAutomaton::PushDownAutomaton(const Grammar& grammar)
 
 	for (const auto& [inputSymbol, outputSymbols] : grammar.GetProductions())
 	{
-		//if there is only one element we need to delete the top of the stack
 		if(outputSymbols.size()==1)
 		{
 			m_transitionFunctions.emplace
@@ -30,7 +29,7 @@ PushDownAutomaton::PushDownAutomaton(const Grammar& grammar)
 		}
 		std::string newStackSymbols = outputSymbols.substr(1);
 		std::ranges::reverse(newStackSymbols);
-		//if there is more than one element we need to add them to the stack
+
 		m_transitionFunctions.emplace
 		(
 			std::format("{}{}{}", firstState, outputSymbols[0], inputSymbol),
@@ -46,7 +45,7 @@ bool PushDownAutomaton::IsDeterministic()
 {
 	return std::ranges::all_of(m_transitionFunctions, [&](const auto& transitionFunction)
 	{
-		//check if there is only one transition function for each input symbol
+	
 		return std::ranges::count_if(m_transitionFunctions, [&](const auto& otherTransitionFunction)
 		{
 			return transitionFunction.first == otherTransitionFunction.first;
@@ -98,7 +97,11 @@ bool PushDownAutomaton::DeterministicAutomatonCheckWord(const std::string& word)
 		}
 	}
 
-	return true;
+	if(stack.empty() || std::ranges::find(m_finalStates,currentState)!=m_finalStates.end())
+	{
+		return true;
+	}
+
 }
 
 bool PushDownAutomaton::NonDeterministicAutomatonCheckWord(const std::string& word)

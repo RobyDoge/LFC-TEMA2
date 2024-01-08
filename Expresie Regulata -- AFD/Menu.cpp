@@ -16,6 +16,8 @@ void Menu::Run(const std::string& inputFileName)
 	m_expressionToAutomaton->SetPolishForm();
 	m_automaton = m_expressionToAutomaton->CreateAutomatonFromPolishForm();
 
+	std::cout << "\n" << m_automaton.VerifyAutomaton();
+
 	while (ShowMenu())
 	{
 	}

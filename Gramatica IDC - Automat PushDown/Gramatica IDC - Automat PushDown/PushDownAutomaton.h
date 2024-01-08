@@ -28,11 +28,7 @@ private:
 	string m_startingState{};
 	char m_initialStackHead{};
 	std::vector<string> m_finalStates{};
-	/*{currentState(q+no), inputSymbol, stackHead} -> {outputState, newStackElements}*/
 	std::unordered_multimap<string,string> m_transitionFunctions{};
 
-	/*custom symbols for stack
-	 * $ - removes the top of the stack
-	 */
 };
 
