@@ -10,6 +10,8 @@ public:
 	DeterministicFiniteAutomaton() = default;
 	~DeterministicFiniteAutomaton() = default;
 
+	void TurnDeterministic();
+
 	void SetStates(const string& states);
 	void SetInputAlphabet(const string& inputAlphabet);
 	void SetStartState(const char& startState);
@@ -27,11 +29,19 @@ public:
 	bool CheckWord(const string& word);
 	void SaveToDisk(const string& fileName) const;
 private:
+
+	std::string EliminateLambdaTransitions(const char state);
+	void RecursiveEliminateLambdaTransitions(const char state, std::string& result);
+	
+	std::string StartStep();
+	std::string CreateNewState(const char symbol, std::string& equivalentStartState);
+
 	bool IsDeterministic();
 	bool StartingStateValidation();
 	bool FinalStatesValidation();
 	bool StateTransitionFunctionsValidation();
 	bool CheckWordRecursive(const string& remainingWord, char currentState);
+	void EliminateDuplicates(std::string& string);
 private:
 	string m_states{};
 	string m_inputAlphabet{};

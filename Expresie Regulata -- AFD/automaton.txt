@@ -1,7 +1,6 @@
-Deterministic Finite Automaton: M = ({A,B,C,D},{$,a},P,C,{D}).
+Deterministic Finite Automaton: M = ({A,B,C,D},{a,b},P,A,{D}).
 P containing the following transitions : 
 P(A,a) -> (B)
-P(C,$) -> (A)
-P(C,$) -> (D)
-P(B,$) -> (D)
-P(B,$) -> (A)
+P(A,b) -> (C)
+P(B,a) -> (D)
+P(C,b) -> (D)

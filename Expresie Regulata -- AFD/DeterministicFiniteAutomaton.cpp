@@ -4,8 +4,157 @@
 #include <format>
 #include <fstream>
 #include <ostream>
+#include <stack>
 
 using string = std::string;
+
+
+//this method takes a non-deterministic finite automaton with lambda transitions and turns it into a deterministic finite automaton
+//we do this by :
+//1. eliminating lambda transitions via lambda closure
+//2. creating a new state for each set of states that can be reached from the initial state
+//3. creating new transitions for each transition that can be reached from the initial state
+//this method should have minimal states and transitions, the input alphabet should remain the same, without lambda
+void DeterministicFiniteAutomaton::TurnDeterministic()
+{
+    std::unordered_multimap<string, char> transitions;
+    std::string states;
+    std::string currentState;
+    char index = 'A';
+    std::string auxState;
+    std::list<string> statesToBeProcessed;
+    std::unordered_map<string, char> stateEquivalents;
+    m_inputAlphabet.erase(std::ranges::find(m_inputAlphabet, '$'));
+
+    currentState = StartStep();
+
+    states += 'A';
+    stateEquivalents.insert({currentState, index});
+    index++;
+    statesToBeProcessed.push_back(currentState);
+
+    while (statesToBeProcessed.size() != 0)
+    {
+        currentState = statesToBeProcessed.front();
+        statesToBeProcessed.pop_front();
+
+        std::ranges::for_each(m_inputAlphabet, [&](const auto& symbol)
+            {
+                auto newState = CreateNewState(symbol, currentState);
+                if (newState != "")
+                {
+                    bool ok = std::any_of(currentState.begin(), currentState.end(), [&](char state) { return stateEquivalents.find({state}) != stateEquivalents.end(); });
+
+                    if (!ok)
+                    {
+						stateEquivalents.insert({ newState, index });
+						auxState = stateEquivalents[currentState];
+                    	auxState+= symbol;
+                        transitions.insert({auxState, index});
+                        statesToBeProcessed.push_back(newState);
+                        states += index;
+                        index++;
+                    }
+                    else
+                    {
+						auxState = stateEquivalents[currentState];
+						auxState += symbol;
+                        transitions.insert({auxState, index});
+                    }
+                }
+            });
+    }
+
+    m_startState = 'A';
+    m_states = states;
+    m_transitions = transitions;
+    m_finalStates = stateEquivalents[m_finalStates];
+}
+
+
+//from the given state, we will find all the states that can be reached via lambda transitions
+std::string DeterministicFiniteAutomaton::EliminateLambdaTransitions(const char state)
+{
+	std::string result{};
+	std::ranges::for_each(m_transitions, [&](const auto& transition)
+		{
+			if (transition.first[0] == state && transition.first[1] == '$')
+			{
+				result += transition.second;
+			}
+		});
+	return result;
+
+}
+
+void DeterministicFiniteAutomaton::RecursiveEliminateLambdaTransitions(const char state, std::string& result)
+{
+	bool ok = std::any_of(m_transitions.begin(), m_transitions.end(), [&](const auto& transition)
+	{
+		return transition.first[0] == state && transition.first[1] == '$';
+	});
+	if (ok)
+		return;
+	for (const auto& transition : m_transitions)
+	{
+		if (transition.first[0] == state && transition.first[1] == '$')
+		{
+			result += state;
+			result += transition.second;
+			RecursiveEliminateLambdaTransitions(transition.second, result);
+		}
+	}
+}
+
+std::string DeterministicFiniteAutomaton::StartStep()
+{
+	std::string currentState;
+
+	//creating the first state to be able to start the algorithm
+	//to do this i will use the start state of the non-deterministic finite automaton
+	//i will find all the transitions that include the start state as the initial state
+	std::ranges::for_each(m_transitions, [&](const auto& transition)
+		{
+			if (transition.first[0] == m_startState)
+			{
+				currentState += transition.second;
+				auto lambdaClosure = EliminateLambdaTransitions(transition.second);
+				currentState += lambdaClosure;
+				EliminateDuplicates(currentState);
+			}
+		});
+	if(currentState.size() == 0)
+		currentState = m_startState;
+
+	currentState += EliminateLambdaTransitions(m_startState);
+	currentState += m_startState;
+	EliminateDuplicates(currentState);
+
+	return currentState;
+}
+
+std::string DeterministicFiniteAutomaton::CreateNewState(const char symbol, std::string& equivalentStartState)
+{
+	std::string newState{};
+	std::ranges::for_each(m_transitions, [&](const auto& transition)
+	{
+		std::ranges::for_each(equivalentStartState, [&](const auto& state)
+		{
+			if (transition.first[0] == state && transition.first[1] == symbol)
+			{
+				
+				newState += transition.second;
+				//auto lambdaClosure = EliminateLambdaTransitions(transition.second);
+				std::string lambdaClosure{};
+				RecursiveEliminateLambdaTransitions(transition.second, lambdaClosure);
+				newState += lambdaClosure;
+				newState += transition.second;
+				EliminateDuplicates(newState);
+			}
+		});
+	});
+	return newState;
+}
 
 void DeterministicFiniteAutomaton::SetStates(const string& states)
 {
@@ -160,6 +309,12 @@ bool DeterministicFiniteAutomaton::CheckWordRecursive(const string& remainingWor
 	return aux;
 	
 
+}
+
+void DeterministicFiniteAutomaton::EliminateDuplicates(std::string& string)
+{
+	std::ranges::sort(string);
+	string.erase(std::unique(string.begin(), string.end()), string.end());
 }
 
 std::ostream& operator<<(std::ostream& os, const DeterministicFiniteAutomaton& automaton)
