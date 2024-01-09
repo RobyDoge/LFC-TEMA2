@@ -43,10 +43,17 @@ void DeterministicFiniteAutomaton::TurnDeterministic()
                 auto newState = CreateNewState(symbol, currentState);
                 if (newState != "")
                 {
-                    bool ok = std::any_of(currentState.begin(), currentState.end(), [&](char state) { return stateEquivalents.find({state}) != stateEquivalents.end(); });
+					// check if the new state is already in the set of states
+					bool ok = true;
+					if (stateEquivalents.find({ newState }) == stateEquivalents.end())
+					{
+					 ok = false;
+					}
 
-                    if (!ok)
+                    //bool ok = std::any_of(currentState.begin(), currentState.end(), [&](char state) { return stateEquivalents.find({state}) != stateEquivalents.end(); });
+                    if (!ok )
                     {
+						
 						stateEquivalents.insert({ newState, index });
 						auxState = stateEquivalents[currentState];
                     	auxState+= symbol;
@@ -89,17 +96,16 @@ std::string DeterministicFiniteAutomaton::EliminateLambdaTransitions(const char 
 
 void DeterministicFiniteAutomaton::RecursiveEliminateLambdaTransitions(const char state, std::string& result)
 {
-	bool ok = std::any_of(m_transitions.begin(), m_transitions.end(), [&](const auto& transition)
-	{
-		return transition.first[0] == state && transition.first[1] == '$';
-	});
-	if (ok)
-		return;
+	//bool ok = std::any_of(m_transitions.begin(), m_transitions.end(), [&](const auto& transition)
+	//{
+	//	return transition.first[0] == state && transition.first[1] == '$';
+	//});
+	//if (ok)
+	//	return;
 	for (const auto& transition : m_transitions)
 	{
 		if (transition.first[0] == state && transition.first[1] == '$')
 		{
-			result += state;
 			result += transition.second;
 			RecursiveEliminateLambdaTransitions(transition.second, result);
 		}
