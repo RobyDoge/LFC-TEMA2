@@ -36,7 +36,7 @@ void DeterministicFiniteAutomaton::TurnDeterministic()
     while (statesToBeProcessed.size() != 0)
     {
         currentState = statesToBeProcessed.front();
-        statesToBeProcessed.pop_front();
+         statesToBeProcessed.pop_front();
 
         std::ranges::for_each(m_inputAlphabet, [&](const auto& symbol)
             {
@@ -51,7 +51,7 @@ void DeterministicFiniteAutomaton::TurnDeterministic()
 					}
 
                     //bool ok = std::any_of(currentState.begin(), currentState.end(), [&](char state) { return stateEquivalents.find({state}) != stateEquivalents.end(); });
-                    if (!ok )
+                     if (!ok && newState!=currentState)
                     {
 						
 						stateEquivalents.insert({ newState, index });
@@ -62,12 +62,18 @@ void DeterministicFiniteAutomaton::TurnDeterministic()
                         states += index;
                         index++;
                     }
-                    else
+                    else if(newState != currentState)
                     {
 						auxState = stateEquivalents[currentState];
 						auxState += symbol;
-                        transitions.insert({auxState, index});
+                        transitions.insert({auxState, stateEquivalents[newState]});
                     }
+					else
+					{
+						 auxState = stateEquivalents[currentState];
+						 auxState += symbol;
+						transitions.insert({auxState, stateEquivalents[currentState] });
+					}
                 }
             });
     }
