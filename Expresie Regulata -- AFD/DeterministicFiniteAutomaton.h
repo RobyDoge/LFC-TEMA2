@@ -31,7 +31,7 @@ public:
 
 private:
 
-	std::string EliminateLambdaTransitions(const char state);
+	
 	void RecursiveEliminateLambdaTransitions(const char state, std::string& result);
 	
 	std::string StartStep();
